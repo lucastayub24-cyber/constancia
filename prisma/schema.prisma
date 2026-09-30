@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Plan { FREE PROFESSIONAL PRO BUSINESS }
+enum SubscriptionStatus { NONE PENDING AUTHORIZED PAUSED CANCELED PAYMENT_FAILED }
+enum CertificateStatus { DRAFT ISSUED VOID }
+
+model User {
+  id                 String              @id @default(cuid())
+  email              String              @unique
+  passwordHash       String
+  name               String
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  organization       Organization?
+  withdrawalRequests WithdrawalRequest[]
+}
+
+model Organization {
+  id                    String             @id @default(cuid())
+  ownerId               String             @unique
+  owner                 User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name                  String
+  cuit                  String?
+  phone                 String?
+  address               String?
+  logoUrl               String?
+  publicSlug             String             @unique
+  plan                   Plan               @default(FREE)
+  subscriptionStatus     SubscriptionStatus @default(NONE)
+  mpSubscriptionId       String?             @unique
+  mpPayerEmail           String?
+  subscriptionCurrentEnd DateTime?
+  cancelAtPeriodEnd      Boolean            @default(false)
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime            @updatedAt
+  clients                Client[]
+  certificates           Certificate[]
+  payments               Payment[]
+}
+
+model Client {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  email          String?
+  phone          String?
+  document       String?
+  address        String?
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  certificates   Certificate[]
+  @@index([organizationId, name])
+}
+
+model Certificate {
+  id                 String             @id @default(cuid())
+  organizationId     String
+  organization       Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  clientId           String?
+  client             Client?            @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  code               String             @unique
+  sequentialNumber   Int
+  status             CertificateStatus  @default(ISSUED)
+  serviceTitle       String
+  description        String
+  technicianName     String?
+  serviceAddress     String?
+  customerName       String?
+  customerDocument   String?
+  customerEmail      String?
+  performedAt        DateTime           @default(now())
+  nextServiceAt      DateTime?
+  signatureDataUrl   String?            @db.Text
+  signatureName      String?
+  customerAcceptedAt DateTime?
+  reminderSentAt     DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  photos             CertificatePhoto[]
+  @@unique([organizationId, sequentialNumber])
+  @@index([organizationId, performedAt])
+  @@index([nextServiceAt, reminderSentAt])
+}
+
+model CertificatePhoto {
+  id            String      @id @default(cuid())
+  certificateId String
+  certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  url           String
+  label         String?
+  sortOrder     Int         @default(0)
+  createdAt     DateTime    @default(now())
+}
+
+model Payment {
+  id                String       @id @default(cuid())
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  provider          String       @default("mercadopago")
+  providerPaymentId String?      @unique
+  amount            Decimal      @db.Decimal(12, 2)
+  currency          String       @default("ARS")
+  status            String
+  raw               Json?
+  paidAt            DateTime?
+  createdAt         DateTime     @default(now())
+  @@index([organizationId, createdAt])
+}
+
+model WithdrawalRequest {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email       String
+  kind        String
+  description String?
+  status      String   @default("OPEN")
+  createdAt   DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId, expiresAt])
+}
