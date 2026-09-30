@@ -1,0 +1,2 @@
+import Link from "next/link";import {Brand} from "@/components/Brand";import {LegalRequestForm} from "@/components/LegalRequestForm";
+export default function Page(){return <main className="legal-page"><Brand/><p><Link href="/" className="muted">← Volver</Link></p><div className="eyebrow">DERECHO DEL CONSUMIDOR</div><h1>Botón de Arrepentimiento</h1><p>Podés solicitar la revocación de una contratación realizada a distancia cuando corresponda según la normativa aplicable. No necesitás iniciar sesión.</p><LegalRequestForm type="WITHDRAWAL"/></main>}

@@ -1,0 +1,2 @@
+import Link from "next/link";import {Brand} from "@/components/Brand";import {LegalRequestForm} from "@/components/LegalRequestForm";
+export default function Page(){return <main className="legal-page"><Brand/><p><Link href="/" className="muted">← Volver</Link></p><div className="eyebrow">DERECHO DEL CONSUMIDOR</div><h1>Botón de Baja de Servicio</h1><p>Solicitá la baja sin necesidad de iniciar sesión. Si todavía tenés acceso a tu cuenta, también podés cancelar desde Facturación.</p><LegalRequestForm type="CANCELLATION"/></main>}
