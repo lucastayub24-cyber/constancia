@@ -7,87 +7,182 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Plan { FREE PROFESSIONAL PRO BUSINESS }
-enum SubscriptionStatus { NONE PENDING AUTHORIZED PAUSED CANCELED PAYMENT_FAILED }
-enum CertificateStatus { DRAFT ISSUED VOID }
+enum AppRole {
+  ADMIN
+  USER
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum Plan {
+  FREE
+  PROFESSIONAL
+  PRO
+  BUSINESS
+}
+
+enum SubscriptionStatus {
+  INACTIVE
+  PENDING
+  ACTIVE
+  PAUSED
+  CANCELED
+  PAYMENT_FAILED
+}
+
+enum CertificateStatus {
+  DRAFT
+  ISSUED
+  VOID
+}
+
+enum ServicePaymentStatus {
+  NO_AMOUNT
+  PENDING
+  PARTIAL
+  PAID
+}
+
+enum ServicePaymentMethod {
+  CASH
+  BANK_TRANSFER
+  MERCADO_PAGO
+  DEBIT_CARD
+  CREDIT_CARD
+  CHECK
+  OTHER
+}
+
+enum LegalRequestType {
+  WITHDRAWAL
+  CANCELLATION
+  PRIVACY
+}
+
+enum LegalRequestStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  REJECTED
+}
 
 model User {
-  id                 String              @id @default(cuid())
-  email              String              @unique
-  passwordHash       String
-  name               String
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  organization       Organization?
-  withdrawalRequests WithdrawalRequest[]
+  id                   String         @id @default(cuid())
+  email                String         @unique
+  passwordHash         String
+  name                 String
+  role                 AppRole        @default(USER)
+  activeOrganizationId String?
+  activeOrganization   Organization?  @relation("ActiveOrganization", fields: [activeOrganizationId], references: [id], onDelete: SetNull)
+  memberships          Membership[]
+  createdCertificates  Certificate[]  @relation("CertificateCreator")
+  servicePayments      CertificatePayment[]
+  teamInvites          TeamInvite[]   @relation("InviteCreator")
+  legalRequests        LegalRequest[]
+  resetTokens          PasswordResetToken[]
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  @@index([activeOrganizationId])
 }
 
 model Organization {
-  id                    String             @id @default(cuid())
-  ownerId               String             @unique
-  owner                 User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  name                  String
-  cuit                  String?
-  phone                 String?
-  address               String?
-  logoUrl               String?
-  publicSlug             String             @unique
-  plan                   Plan               @default(FREE)
-  subscriptionStatus     SubscriptionStatus @default(NONE)
-  mpSubscriptionId       String?             @unique
-  mpPayerEmail           String?
-  subscriptionCurrentEnd DateTime?
-  cancelAtPeriodEnd      Boolean            @default(false)
-  createdAt              DateTime           @default(now())
-  updatedAt              DateTime            @updatedAt
-  clients                Client[]
-  certificates           Certificate[]
-  payments               Payment[]
+  id                       String             @id @default(cuid())
+  name                     String
+  legalName                String?
+  cuit                     String?
+  email                    String?
+  phone                    String?
+  address                  String?
+  logoUrl                  String?
+  publicSlug               String             @unique
+  plan                     Plan               @default(FREE)
+  monthlyCertificateLimit  Int                @default(5)
+  subscriptionStatus       SubscriptionStatus @default(INACTIVE)
+  mpSubscriptionId         String?            @unique
+  mpPayerEmail             String?
+  subscriptionCurrentEnd   DateTime?
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+
+  memberships              Membership[]
+  activeUsers              User[]             @relation("ActiveOrganization")
+  clients                  Client[]
+  certificates             Certificate[]
+  subscriptionPayments     SubscriptionPayment[]
+  teamInvites              TeamInvite[]
+  legalRequests            LegalRequest[]
+}
+
+model Membership {
+  id             String         @id @default(cuid())
+  organizationId String
+  userId         String
+  role           MembershipRole @default(MEMBER)
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime       @default(now())
+
+  @@unique([organizationId, userId])
+  @@index([userId])
 }
 
 model Client {
-  id             String        @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   name           String
   email          String?
   phone          String?
-  document       String?
+  taxId          String?
   address        String?
   notes          String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   certificates   Certificate[]
+
   @@index([organizationId, name])
 }
 
 model Certificate {
-  id                 String             @id @default(cuid())
-  organizationId     String
-  organization       Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  clientId           String?
-  client             Client?            @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  code               String             @unique
-  sequentialNumber   Int
-  status             CertificateStatus  @default(ISSUED)
-  serviceTitle       String
-  description        String
-  technicianName     String?
-  serviceAddress     String?
-  customerName       String?
-  customerDocument   String?
-  customerEmail      String?
-  performedAt        DateTime           @default(now())
-  nextServiceAt      DateTime?
-  signatureDataUrl   String?            @db.Text
-  signatureName      String?
-  customerAcceptedAt DateTime?
-  reminderSentAt     DateTime?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  photos             CertificatePhoto[]
+  id                  String               @id @default(cuid())
+  organizationId      String
+  organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  clientId            String?
+  client              Client?              @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  createdByUserId     String
+  createdBy           User                 @relation("CertificateCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  sequentialNumber    Int
+  code                String               @unique
+  status              CertificateStatus    @default(ISSUED)
+  serviceTitle        String
+  description         String               @db.Text
+  observations        String?              @db.Text
+  technicianName      String?
+  serviceAddress      String?
+  performedAt         DateTime             @default(now())
+  nextServiceAt       DateTime?
+  reminderSentAt      DateTime?
+  signatureDataUrl    String?              @db.Text
+  signatureName       String?
+  customerAcceptedAt  DateTime?
+  totalAmountCents    BigInt?
+  currency            String               @default("ARS")
+  paymentStatus       ServicePaymentStatus @default(NO_AMOUNT)
+  paymentDueDate      DateTime?
+  paymentNotes        String?              @db.Text
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  photos              CertificatePhoto[]
+  servicePayments     CertificatePayment[]
+
   @@unique([organizationId, sequentialNumber])
   @@index([organizationId, performedAt])
+  @@index([organizationId, paymentStatus])
   @@index([nextServiceAt, reminderSentAt])
 }
 
@@ -95,44 +190,87 @@ model CertificatePhoto {
   id            String      @id @default(cuid())
   certificateId String
   certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
-  url           String
+  storageKey    String
   label         String?
   sortOrder     Int         @default(0)
   createdAt     DateTime    @default(now())
 }
 
-model Payment {
+model CertificatePayment {
+  id              String               @id @default(cuid())
+  certificateId   String
+  certificate     Certificate          @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  amountCents     BigInt
+  method          ServicePaymentMethod
+  paidAt          DateTime             @default(now())
+  reference       String?
+  notes           String?              @db.Text
+  createdByUserId String?
+  createdBy       User?                @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt       DateTime             @default(now())
+
+  @@index([certificateId, paidAt])
+}
+
+model SubscriptionPayment {
   id                String       @id @default(cuid())
   organizationId    String
   organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   provider          String       @default("mercadopago")
-  providerPaymentId String?      @unique
-  amount            Decimal      @db.Decimal(12, 2)
+  providerPaymentId String       @unique
+  amountCents       BigInt
   currency          String       @default("ARS")
   status            String
   raw               Json?
   paidAt            DateTime?
   createdAt         DateTime     @default(now())
+
   @@index([organizationId, createdAt])
 }
 
-model WithdrawalRequest {
-  id          String   @id @default(cuid())
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  email       String
-  kind        String
-  description String?
-  status      String   @default("OPEN")
-  createdAt   DateTime @default(now())
+model TeamInvite {
+  id              String         @id @default(cuid())
+  organizationId  String
+  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email           String
+  role            MembershipRole @default(MEMBER)
+  token           String         @unique
+  expiresAt       DateTime
+  acceptedAt      DateTime?
+  createdByUserId String
+  createdBy       User           @relation("InviteCreator", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  createdAt       DateTime       @default(now())
+
+  @@unique([organizationId, email])
+  @@index([token])
+}
+
+model LegalRequest {
+  id             String             @id @default(cuid())
+  organizationId String?
+  organization   Organization?      @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  userId         String?
+  user           User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type           LegalRequestType
+  status         LegalRequestStatus @default(OPEN)
+  email          String
+  name           String?
+  organizationName String?
+  description    String?            @db.Text
+  resolvedAt     DateTime?
+  createdAt      DateTime           @default(now())
+
+  @@index([status, createdAt])
 }
 
 model PasswordResetToken {
   id        String   @id @default(cuid())
   userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   tokenHash String   @unique
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime @default(now())
+
   @@index([userId, expiresAt])
 }
