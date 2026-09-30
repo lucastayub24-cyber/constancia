@@ -37,3 +37,4 @@ jobs:
       - run: npx prisma db push
       - run: npm run typecheck
       - run: npm run build
+      - run: npm audit --omit=dev --audit-level=critical
