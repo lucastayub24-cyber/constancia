@@ -5,7 +5,10 @@ export function Brand({ inverted = false }: { inverted?: boolean }) {
     <Link href="/" className={"brand brand-logo" + (inverted ? " brand-logo-inverted" : "")} aria-label="Constancia — Inicio">
       <img
         src={inverted ? "/brand/constancia-logo-on-dark.svg" : "/brand/constancia-logo.svg"}
-        alt="Constancia"
+        alt=""
+        width="980"
+        height="250"
+        decoding="async"
         className="brand-image"
       />
     </Link>
