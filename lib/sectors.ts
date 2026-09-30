@@ -8,3 +8,5 @@ export const SECTORS:{slug:string;title:string;headline:string;examples:string[]
   {slug:'limpieza-profesional',title:'Limpieza profesional',headline:'Comprobantes claros para servicios de limpieza',examples:['servicios recurrentes','limpieza técnica','entregas']},
   {slug:'seguridad-electronica',title:'Seguridad electrónica',headline:'Documentá instalaciones y mantenimientos de seguridad',examples:['cámaras','alarmas','control de acceso']}
 ];
+
+export const sectors = SECTORS;
