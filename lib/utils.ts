@@ -1,5 +1,7 @@
 export function appUrl(path = "") {
-  const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const configured = process.env.NEXT_PUBLIC_APP_URL;
+  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+  const base = configured || (vercelHost ? "https://" + vercelHost : "http://localhost:3000");
   return new URL(path, base.endsWith("/") ? base : base + "/").toString();
 }
 
