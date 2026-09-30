@@ -1,2 +1,14 @@
-import Link from "next/link";import { Brand } from "./Brand";
-export function PublicNav(){return <div className="container nav"><Brand/><nav className="navlinks"><Link href="/#como-funciona">Cómo funciona</Link><Link href="/precios">Precios</Link><Link href="/login">Ingresar</Link><Link className="btn btn-primary" href="/registro">Probar gratis</Link></nav></div>}
+import Link from "next/link";
+import { Brand } from "./Brand";
+
+export function PublicNav(){
+  return <header className="container nav">
+    <Brand/>
+    <nav className="navlinks" aria-label="Navegación principal">
+      <Link href="/#como-funciona">Cómo funciona</Link>
+      <Link href="/precios">Precios</Link>
+      <Link href="/login">Ingresar</Link>
+      <Link className="btn btn-primary" href="/registro">Probar gratis</Link>
+    </nav>
+  </header>;
+}
