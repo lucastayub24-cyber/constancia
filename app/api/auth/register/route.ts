@@ -1,13 +1,15 @@
-import { NextResponse } from "next/server";
-import { hash } from "bcryptjs";
-import { db } from "@/lib/db";
-import { createSession } from "@/lib/auth";
-import { registerSchema } from "@/lib/validation";
-import { slugify } from "@/lib/utils";
-import { randomUUID } from "crypto";
+import {NextResponse} from "next/server";
+import {hash} from "bcryptjs";
+import {db} from "@/lib/db";
+import {createSession} from "@/lib/auth";
+import {registerSchema} from "@/lib/validation";
+import {slugify} from "@/lib/utils";
+import {randomUUID} from "crypto";
+import {consumeRateLimit,RateLimitError} from "@/lib/rate-limit";
 
 export async function POST(request:Request){
   try{
+    await consumeRateLimit(request,"register","new-account",10,60*60*1000);
     const input=registerSchema.parse(await request.json());
     const email=input.email.toLowerCase();
     if(await db.user.findUnique({where:{email}}))return NextResponse.json({error:"Ese email ya está registrado."},{status:409});
@@ -23,5 +25,8 @@ export async function POST(request:Request){
     });
     await createSession(user.id);
     return NextResponse.json({ok:true});
-  }catch(error){return NextResponse.json({error:error instanceof Error?error.message:"No se pudo crear la cuenta"},{status:400})}
+  }catch(error){
+    if(error instanceof RateLimitError)return NextResponse.json({error:error.message},{status:429});
+    return NextResponse.json({error:error instanceof Error?error.message:"No se pudo crear la cuenta"},{status:400});
+  }
 }
