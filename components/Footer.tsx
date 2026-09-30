@@ -1,0 +1,2 @@
+import Link from "next/link";
+export function Footer(){return <><div className="container footer"><span>© {new Date().getFullYear()} Constancia</span><span style={{display:"flex",gap:14}}><Link href="/legal/terminos">Términos</Link><Link href="/legal/privacidad">Privacidad</Link><Link href="/arrepentimiento">Arrepentimiento</Link><Link href="/baja">Baja</Link></span></div><div className="stickylegal"><Link href="/arrepentimiento">BOTÓN DE ARREPENTIMIENTO</Link><Link href="/baja">BOTÓN DE BAJA DE SERVICIO</Link></div></>}
