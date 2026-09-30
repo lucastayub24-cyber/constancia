@@ -33,13 +33,6 @@ export async function GET(request:Request){
       "Próximo service: "+clientName+" · "+due,
       "<p>Tenés un próximo service programado.</p><p><b>Cliente:</b> "+clientName+"<br/><b>Trabajo anterior:</b> "+c.serviceTitle+"<br/><b>Fecha sugerida:</b> "+due+"</p><p><a href=\""+appUrl("/dashboard/constancia/"+c.id)+"\">Abrir constancia</a></p>"
     );
-    if(c.client?.email){
-      await sendEmail(
-        c.client.email,
-        "Recordatorio de próximo service · "+c.organization.name,
-        "<p>Hola "+c.client.name+",</p><p>"+c.organization.name+" dejó programado un próximo service para el <b>"+due+"</b>.</p><p>Podés coordinar directamente con el prestador.</p>"
-      ).catch(()=>null);
-    }
     await db.certificate.update({where:{id:c.id},data:{reminderSentAt:new Date()}});
     sent++;
   }
