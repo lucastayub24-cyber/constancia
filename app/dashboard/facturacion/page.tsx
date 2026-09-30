@@ -1,0 +1,2 @@
+import {BillingPlans} from "@/components/BillingPlans";import {activeOrganization} from "@/lib/org";
+export default async function Billing(){const{organization}=await activeOrganization();return <><header className="page-head"><div><div className="eyebrow">FACTURACIÓN</div><h1>Tu plan</h1><p>Cobro recurrente seguro mediante Mercado Pago.</p></div></header><BillingPlans current={organization.plan} status={organization.subscriptionStatus}/></>}
