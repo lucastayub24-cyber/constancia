@@ -4,60 +4,37 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
-  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: constancia
+          POSTGRES_PASSWORD: constancia
+          POSTGRES_DB: constancia
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
-      DATABASE_URL: postgresql://user:password@localhost:5432/constancia?schema=public
-      JWT_SECRET: ci-only-secret-with-more-than-32-characters
+      DATABASE_URL: postgresql://constancia:constancia@localhost:5432/constancia?schema=public
+      JWT_SECRET: ci-only-secret-with-at-least-32-characters
       NEXT_PUBLIC_APP_URL: http://localhost:3000
+      CRON_SECRET: ci-cron-secret
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install dependencies
-        run: npm install
-      - name: Generate Prisma client
-        id: prisma
-        continue-on-error: true
-        run: npx prisma generate > prisma.log 2>&1
-      - name: Upload Prisma diagnostics
-        if: steps.prisma.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: prisma-diagnostics
-          path: prisma.log
-      - name: Stop on Prisma error
-        if: steps.prisma.outcome == 'failure'
-        run: exit 1
-      - name: Typecheck
-        id: typecheck
-        continue-on-error: true
-        run: npm run typecheck > typecheck.log 2>&1
-      - name: Upload TypeScript diagnostics
-        if: steps.typecheck.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: typescript-diagnostics
-          path: typecheck.log
-      - name: Stop on TypeScript error
-        if: steps.typecheck.outcome == 'failure'
-        run: exit 1
-      - name: Build
-        id: build
-        continue-on-error: true
-        run: npm run build > build.log 2>&1
-      - name: Upload build diagnostics
-        if: steps.build.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-diagnostics
-          path: build.log
-      - name: Stop on build error
-        if: steps.build.outcome == 'failure'
-        run: exit 1
+          cache: npm
+      - run: npm install
+      - run: npx prisma generate
+      - run: npx prisma db push
+      - run: npm run typecheck
+      - run: npm run build
