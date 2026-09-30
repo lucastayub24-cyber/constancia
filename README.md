@@ -1,34 +1,36 @@
 # Constancia
 
-SaaS B2B para documentar trabajos y servicios con fotos, firma, QR verificable, PDF, importes, pagos y próximo service.
+SaaS B2B para documentar trabajos y servicios con fotos, firma, QR verificable, PDF, cobros, pagos parciales, historial y próximos services.
 
-## Qué incluye
+## Stack
+- Next.js 15 / React 19
+- PostgreSQL + Prisma
+- Mercado Pago Subscriptions
+- Resend
+- Cloudflare R2 / S3 compatible
+- Vercel Cron
 
-- Registro, login y recuperación de contraseña.
-- Multiempresa y equipo por roles.
-- Clientes: alta, edición y baja.
-- Constancias con evidencia fotográfica privada, firma y QR público.
-- Importe total, pago inicial, pagos parciales, saldo, vencimiento y medio de pago.
-- PDF A4 que se actualiza con el historial de pagos.
-- Suscripciones recurrentes con Mercado Pago.
-- Webhooks para estado de suscripción y cobros autorizados.
-- Recordatorios de próximos services y saldos pendientes.
-- Panel admin del SaaS con usuarios, empresas, MRR, cobros y solicitudes legales.
-- Términos, privacidad, arrepentimiento y baja.
-- Landing pages SEO por rubro.
-- GitHub Actions para validar Prisma, TypeScript y build.
+## Funciones
+- Registro/login y recuperación de contraseña
+- Multiempresa y plan Empresa multiusuario
+- Clientes CRUD
+- Constancias con evidencia, firma y QR
+- Importe total, pagos parciales, medios de pago, saldo y vencimiento
+- PDF A4 verificable
+- Recordatorios automáticos de próximo service
+- Suscripciones Mercado Pago
+- Baja / arrepentimiento / privacidad sin login
+- Panel admin con usuarios, suscripciones, cobros y solicitudes legales
+- SEO por rubro + sitemap/robots
+
+## Desarrollo
+1. Copiar `.env.example` a `.env.local`.
+2. Configurar PostgreSQL.
+3. `npm install`
+4. `npm run setup`
+5. `npm run dev`
 
 ## Producción
+Configurar todas las variables de entorno en Vercel, ejecutar `npm run db:push` o migraciones equivalentes, y desplegar `main`.
 
-1. Crear PostgreSQL y definir DATABASE_URL.
-2. Generar un JWT_SECRET aleatorio de al menos 32 caracteres.
-3. Configurar Mercado Pago con MERCADOPAGO_ACCESS_TOKEN y MERCADOPAGO_WEBHOOK_SECRET.
-4. Registrar el webhook de Mercado Pago en /api/mercadopago/webhook.
-5. Configurar almacenamiento R2/S3 compatible para fotos.
-6. Configurar Resend y un dominio remitente verificado para emails.
-7. Definir CRON_SECRET. El cron diario está declarado en vercel.json.
-8. Completar NEXT_PUBLIC_APP_URL y los datos legales/fiscales del proveedor.
-9. Ejecutar npm install, npx prisma generate y npx prisma db push o una migración controlada.
-10. Desplegar y crear la primera cuenta. La primera cuenta registrada queda como administrador global.
-
-No guardar claves reales en Git. Usar .env.example solo como referencia.
+No subir secretos al repositorio.
