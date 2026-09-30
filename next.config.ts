@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   poweredByHeader:false,
   compress:true,
   experimental:{serverActions:{bodySizeLimit:"5mb"}},
-  images:{remotePatterns:[{protocol:"https",hostname:"**"}]},
+  images:{remotePatterns:[{protocol:"https",hostname:"**"}]},\n  async rewrites(){return {beforeFiles:[{source:"/",destination:"/landing.html"}],afterFiles:[],fallback:[]}},
   async headers(){return [
     {source:"/sw.js",headers:[
       {key:"Cache-Control",value:"no-cache, no-store, must-revalidate"},
