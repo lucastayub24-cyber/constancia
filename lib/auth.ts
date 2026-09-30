@@ -1,30 +1,37 @@
+import { createHash, randomBytes } from "crypto";
 import { cookies } from "next/headers";
-import { SignJWT, jwtVerify } from "jose";
 import { db } from "@/lib/db";
 
 const COOKIE = "constancia_session";
+const MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
-function secret() {
-  const value = process.env.JWT_SECRET;
-  if (!value || value.length < 32) {
-    if (process.env.NODE_ENV === "production") throw new Error("JWT_SECRET no está configurado correctamente");
-    return new TextEncoder().encode("dev-only-change-me-please-32-characters");
-  }
-  return new TextEncoder().encode(value);
+function tokenHash(token: string) {
+  return createHash("sha256").update(token).digest("hex");
 }
 
 export async function createSession(userId: string) {
-  const token = await new SignJWT({ userId })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("30d")
-    .sign(secret());
+  const token = randomBytes(32).toString("hex");
+  await db.session.create({
+    data: {
+      userId,
+      tokenHash: tokenHash(token),
+      expiresAt: new Date(Date.now() + MAX_AGE_SECONDS * 1000),
+    },
+  });
   const jar = await cookies();
-  jar.set(COOKIE, token, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 24 * 30 });
+  jar.set(COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: MAX_AGE_SECONDS,
+  });
 }
 
 export async function clearSession() {
   const jar = await cookies();
+  const token = jar.get(COOKIE)?.value;
+  if (token) await db.session.deleteMany({ where: { tokenHash: tokenHash(token) } }).catch(() => undefined);
   jar.set(COOKIE, "", { httpOnly: true, expires: new Date(0), path: "/" });
 }
 
@@ -32,12 +39,16 @@ export async function sessionUserId() {
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;
   if (!token) return null;
-  try {
-    const { payload } = await jwtVerify(token, secret());
-    return typeof payload.userId === "string" ? payload.userId : null;
-  } catch {
+  const session = await db.session.findUnique({
+    where: { tokenHash: tokenHash(token) },
+    select: { id: true, userId: true, expiresAt: true },
+  }).catch(() => null);
+  if (!session) return null;
+  if (session.expiresAt <= new Date()) {
+    await db.session.delete({ where: { id: session.id } }).catch(() => undefined);
     return null;
   }
+  return session.userId;
 }
 
 export async function currentUser() {
