@@ -88,7 +88,6 @@ export async function certificatePdfBuffer(c:CertificateData){
     page=pdf.addPage(A4);
     y=790;
     page.drawText("CONSTANCIA",{x:38,y,size:13,font:bold,color:ink});
-    page.drawText("continuación",{x:122,y:size?0:0});
     y-=28;
   };
 
@@ -96,7 +95,7 @@ export async function certificatePdfBuffer(c:CertificateData){
     if(y-height<55)addPage();
   };
 
-  page.drawRectangle({x:28,y:750,width:539,height:62,color:dark,borderRadius:6});
+  page.drawRectangle({x:28,y:750,width:539,height:62,color:dark});
   page.drawText("CONSTANCIA",{x:44,y:783,size:20,font:bold,color:rgb(1,1,1)});
   page.drawText("REGISTRO DE SERVICIO",{x:44,y:766,size:7,font:bold,color:rgb(0.61,0.84,0.70)});
   page.drawText("VERIFICADA",{x:474,y:784,size:7,font:bold,color:rgb(0.51,0.88,0.67)});
@@ -124,7 +123,7 @@ export async function certificatePdfBuffer(c:CertificateData){
     ensure(55);
     const obsLines=wrap(regular,c.observations,8.5,491);
     const h=24+obsLines.length*11;
-    page.drawRectangle({x:38,y:y-h+8,width:519,height:h,color:rgb(0.95,0.96,0.94),borderRadius:4});
+    page.drawRectangle({x:38,y:y-h+8,width:519,height:h,color:rgb(0.95,0.96,0.94)});
     drawLabel(page,regular,"Observaciones",50,y-7);
     y=drawWrapped(page,regular,c.observations,50,y-22,491,8.5,11,muted)-10;
   }
@@ -143,7 +142,7 @@ export async function certificatePdfBuffer(c:CertificateData){
     ];
     boxes.forEach((box,i)=>{
       const x=38+i*174;
-      page.drawRectangle({x,y:y-42,width:164,height:42,color:rgb(0.95,0.96,0.94),borderRadius:4});
+      page.drawRectangle({x,y:y-42,width:164,height:42,color:rgb(0.95,0.96,0.94)});
       drawLabel(page,regular,box[0],x+9,y-13);
       page.drawText(safe(box[1]),{x:x+9,y:y-31,size:10,font:bold,color:ink});
     });
@@ -205,7 +204,7 @@ export async function certificatePdfBuffer(c:CertificateData){
 
   if(c.nextServiceAt){
     ensure(55);
-    page.drawRectangle({x:38,y:y-42,width:519,height:42,color:greenSoft,borderRadius:4});
+    page.drawRectangle({x:38,y:y-42,width:519,height:42,color:greenSoft});
     drawLabel(page,regular,"Próximo service sugerido",50,y-13);
     page.drawText(c.nextServiceAt.toLocaleDateString("es-AR"),{x:50,y:y-31,size:10,font:bold,color:green});
     y-=58;
