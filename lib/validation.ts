@@ -26,7 +26,7 @@ export const certificateSchema=z.object({
   nextServiceAt:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
   signatureDataUrl:z.string().max(900000).optional().or(z.literal("")),
   signatureName:z.string().trim().max(160).optional(),
-  photoKeys:z.array(z.string().max(300)).max(6).default([]),
+  photoKeys:z.array(z.string().max(500000)).max(6).default([]),
   totalAmount:z.union([z.number(),z.string()]).optional(),
   paymentDueDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
   initialPaymentAmount:z.union([z.number(),z.string()]).optional(),
