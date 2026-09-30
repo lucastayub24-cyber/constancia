@@ -9,38 +9,27 @@ export async function GET() {
     await db.$queryRaw`SELECT 1`;
     database = true;
     const rows = await db.$queryRaw<Array<{ table_name: string }>>`
-      SELECT table_name
-      FROM information_schema.tables
-      WHERE table_schema = 'public'
-      ORDER BY table_name
+      SELECT table_name FROM information_schema.tables
+      WHERE table_schema = 'public' ORDER BY table_name
     `;
     schemaTables = rows.map((row) => row.table_name);
   } catch (error) {
-    databaseError = error instanceof Error ? error.message.split("\n")[0].slice(0, 180) : "Database unavailable";
+    databaseError = error instanceof Error ? error.message.split("\n")[0].slice(0,180) : "Database unavailable";
   }
-
-  const present = (name: string) => Boolean(process.env[name]);
-
+  const present = (name:string) => Boolean(process.env[name]);
+  const coreTables = ["User","Session","Organization","Membership","Client","Certificate","CertificatePayment"];
   return NextResponse.json({
-    ok: database,
+    ok: database && coreTables.every((table)=>schemaTables.includes(table)),
     database,
     databaseError,
+    schemaReady: coreTables.every((table)=>schemaTables.includes(table)),
     schemaTables,
-    env: {
-      nextPublicAppUrl: present("NEXT_PUBLIC_APP_URL"),
-      mercadoPagoAccessToken: present("MERCADOPAGO_ACCESS_TOKEN"),
-      mercadoPagoWebhookSecret: present("MERCADOPAGO_WEBHOOK_SECRET"),
-      resendApiKey: present("RESEND_API_KEY"),
-      emailFrom: present("EMAIL_FROM"),
-      r2Endpoint: present("R2_ENDPOINT"),
-      r2AccessKeyId: present("R2_ACCESS_KEY_ID"),
-      r2SecretAccessKey: present("R2_SECRET_ACCESS_KEY"),
-      r2Bucket: present("R2_BUCKET"),
-      cronSecret: present("CRON_SECRET"),
-      legalBusinessName: present("LEGAL_BUSINESS_NAME"),
-      legalCuit: present("LEGAL_CUIT"),
-      legalAddress: present("LEGAL_ADDRESS"),
-      legalEmail: present("LEGAL_EMAIL")
+    optionalIntegrations:{
+      mercadoPago:present("MERCADOPAGO_ACCESS_TOKEN")&&present("MERCADOPAGO_WEBHOOK_SECRET"),
+      transactionalEmail:present("RESEND_API_KEY")&&present("EMAIL_FROM"),
+      r2Storage:present("R2_ENDPOINT")&&present("R2_ACCESS_KEY_ID")&&present("R2_SECRET_ACCESS_KEY")&&present("R2_BUCKET"),
+      cronSecret:present("CRON_SECRET"),
+      legalIdentity:present("LEGAL_BUSINESS_NAME")&&present("LEGAL_CUIT")&&present("LEGAL_ADDRESS")&&present("LEGAL_EMAIL")
     }
-  }, { headers: { "Cache-Control": "no-store" } });
+  },{headers:{"Cache-Control":"no-store"}});
 }
