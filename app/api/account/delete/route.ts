@@ -4,6 +4,7 @@ import {z} from "zod";
 import {db} from "@/lib/db";
 import {clearSession,requireUser} from "@/lib/auth";
 import {cancelSubscription} from "@/lib/mercadopago";
+import {deleteStoredObjects} from "@/lib/storage";
 
 const schema=z.object({password:z.string().min(1),confirmation:z.literal("ELIMINAR")});
 
@@ -18,18 +19,25 @@ export async function POST(request:Request){
       include:{organization:{include:{memberships:true}}}
     });
     const organizationsToDelete=owned.filter(m=>!m.organization.memberships.some(other=>other.userId!==user.id&&other.role==="OWNER"));
+    const organizationIds=organizationsToDelete.map(m=>m.organizationId);
 
     for(const membership of organizationsToDelete){
       const org=membership.organization;
-      if(org.mpSubscriptionId&&["ACTIVE","PENDING","PAUSED"].includes(org.subscriptionStatus)){
+      if(org.mpSubscriptionId&&["ACTIVE","PENDING","PAUSED","PAYMENT_FAILED"].includes(org.subscriptionStatus)){
         await cancelSubscription(org.mpSubscriptionId);
       }
     }
 
+    if(organizationIds.length){
+      const photos=await db.certificatePhoto.findMany({
+        where:{certificate:{organizationId:{in:organizationIds}}},
+        select:{storageKey:true}
+      });
+      if(photos.length)await deleteStoredObjects(photos.map(p=>p.storageKey));
+    }
+
     await db.$transaction(async tx=>{
-      for(const membership of organizationsToDelete){
-        await tx.organization.delete({where:{id:membership.organizationId}});
-      }
+      for(const organizationId of organizationIds)await tx.organization.delete({where:{id:organizationId}});
       await tx.user.delete({where:{id:user.id}});
     });
     await clearSession();

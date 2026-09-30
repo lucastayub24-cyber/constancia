@@ -1,4 +1,4 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectsCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 function client() {
@@ -22,4 +22,16 @@ export async function presignPhotoUpload(key: string, contentType: string, size:
 export async function signedPhotoUrl(key: string) {
   const command = new GetObjectCommand({ Bucket: process.env.R2_BUCKET!, Key: key });
   return getSignedUrl(client(), command, { expiresIn: 3600 });
+}
+
+export async function deleteStoredObjects(keys:string[]) {
+  if(keys.length===0)return;
+  const s3=client();
+  for(let i=0;i<keys.length;i+=1000){
+    const chunk=keys.slice(i,i+1000);
+    await s3.send(new DeleteObjectsCommand({
+      Bucket:process.env.R2_BUCKET!,
+      Delete:{Objects:chunk.map(Key=>({Key})),Quiet:true}
+    }));
+  }
 }
