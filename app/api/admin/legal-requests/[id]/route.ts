@@ -1,0 +1,3 @@
+import {NextResponse} from "next/server";import {z} from "zod";import {db} from "@/lib/db";import {requireUser} from "@/lib/auth";
+const schema=z.object({status:z.enum(["OPEN","IN_REVIEW","RESOLVED","REJECTED"])});
+export async function PATCH(request:Request,{params}:{params:Promise<{id:string}>}){try{const user=await requireUser();if(user.role!=="ADMIN")return NextResponse.json({error:"Acceso denegado"},{status:403});const{id}=await params;const{status}=schema.parse(await request.json());await db.legalRequest.update({where:{id},data:{status,resolvedAt:["RESOLVED","REJECTED"].includes(status)?new Date():null}});return NextResponse.json({ok:true})}catch(error){return NextResponse.json({error:error instanceof Error?error.message:"No se pudo actualizar"},{status:400})}}
