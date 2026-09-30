@@ -39,3 +39,26 @@ jobs:
       - run: npx tsx scripts/smoke-pdf.ts
       - run: npm run build
       - run: npm audit --omit=dev --audit-level=critical
+
+      - name: Wait for production deployment
+        run: sleep 90
+      - name: Lighthouse production audit
+        run: |
+          npx --yes lighthouse https://constancia-nu.vercel.app/ \
+            --only-categories=performance,accessibility,best-practices,seo \
+            --output=json \
+            --output-path=./lighthouse.json \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage"
+      - name: Print Lighthouse scores and failed audits
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const r=JSON.parse(fs.readFileSync('lighthouse.json','utf8'));
+          const cats=r.categories;
+          const scores=Object.fromEntries(Object.entries(cats).map(([k,v])=>[k,Math.round(v.score*100)]));
+          console.log('LIGHTHOUSE_SCORES',JSON.stringify(scores));
+          const failed=Object.values(r.audits)
+            .filter(a=>a.score!==null && a.score<1 && ['binary','numeric'].includes(a.scoreDisplayMode))
+            .map(a=>({id:a.id,title:a.title,score:a.score,displayValue:a.displayValue}));
+          console.log('LIGHTHOUSE_FAILED_AUDITS',JSON.stringify(failed,null,2));
+          NODE
