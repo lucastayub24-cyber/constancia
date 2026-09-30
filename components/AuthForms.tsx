@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -23,7 +24,7 @@ export function LoginForm(){
   return <form className="form" onSubmit={submit}>
     {error&&<div className="error">{error}</div>}
     <div className="field"><label>Email</label><input className="input" name="email" type="email" required autoComplete="email"/></div>
-    <div className="field"><label>Contraseña</label><input className="input" name="password" type="password" required autoComplete="current-password"/></div>
+    <div className="field"><label>Contraseña</label><input className="input" name="password" type="password" required autoComplete="current-password"/><Link href="/recuperar" style={{fontSize:10,color:"var(--green)",marginTop:3}}>Olvidé mi contraseña</Link></div>
     <button className="btn btn-brand" disabled={busy}>{busy?"Ingresando...":"Ingresar"}</button>
   </form>
 }
