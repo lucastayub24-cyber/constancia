@@ -73,7 +73,12 @@ const certificate = {
   }],
 } as any;
 
+async function main(){
 const buffer = await certificatePdfBuffer(certificate);
 if (buffer.length < 1500) throw new Error("PDF demasiado pequeño");
 if (buffer.subarray(0, 5).toString("ascii") !== "%PDF-") throw new Error("Salida inválida: no es PDF");
 console.log("PDF smoke OK", buffer.length);
+
+}
+
+main().catch((error)=>{console.error(error);process.exit(1)});
