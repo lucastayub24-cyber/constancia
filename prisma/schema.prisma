@@ -76,9 +76,21 @@ model User {
   teamInvites          TeamInvite[]   @relation("InviteCreator")
   legalRequests        LegalRequest[]
   resetTokens          PasswordResetToken[]
+  sessions             Session[]
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
   @@index([activeOrganizationId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId, expiresAt])
 }
 
 model Organization {
@@ -179,7 +191,7 @@ model CertificatePhoto {
   id String @id @default(cuid())
   certificateId String
   certificate Certificate @relation(fields:[certificateId],references:[id],onDelete:Cascade)
-  storageKey String
+  storageKey String @db.Text
   label String?
   sortOrder Int @default(0)
   createdAt DateTime @default(now())
