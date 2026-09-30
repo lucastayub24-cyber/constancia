@@ -13,11 +13,6 @@ const nextConfig: NextConfig = {
   poweredByHeader:false,
   experimental:{serverActions:{bodySizeLimit:"5mb"}},
   images:{remotePatterns:[{protocol:"https",hostname:"**"}]},
-  outputFileTracingIncludes:{
-    "/api/certificates/[id]/pdf":[
-      "./node_modules/pdfkit/js/standard-fonts/**/*"
-    ]
-  },
   async headers(){return [
     {source:"/sw.js",headers:[{key:"Cache-Control",value:"no-cache, no-store, must-revalidate"},{key:"Service-Worker-Allowed",value:"/"}]},
     {source:"/:path*",headers:securityHeaders}
