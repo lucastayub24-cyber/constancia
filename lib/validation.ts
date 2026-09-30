@@ -1,0 +1,5 @@
+import { z } from "zod";
+export const registerSchema=z.object({name:z.string().min(2).max(80),organizationName:z.string().min(2).max(100),email:z.string().email(),password:z.string().min(8).max(100)});
+export const loginSchema=z.object({email:z.string().email(),password:z.string().min(1)});
+export const clientSchema=z.object({name:z.string().min(2).max(120),email:z.string().email().optional().or(z.literal("")),phone:z.string().max(40).optional(),document:z.string().max(30).optional(),address:z.string().max(180).optional(),notes:z.string().max(1000).optional()});
+export const certificateSchema=z.object({clientId:z.string().optional(),serviceTitle:z.string().min(3).max(140),description:z.string().min(3).max(5000),technicianName:z.string().max(120).optional(),serviceAddress:z.string().max(220).optional(),customerName:z.string().max(120).optional(),customerDocument:z.string().max(30).optional(),customerEmail:z.string().email().optional().or(z.literal("")),nextServiceAt:z.string().optional().nullable(),signatureDataUrl:z.string().max(1500000).optional().nullable(),signatureName:z.string().max(120).optional(),photoUrls:z.array(z.string().url()).max(6).optional()});
