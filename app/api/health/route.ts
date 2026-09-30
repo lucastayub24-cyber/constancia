@@ -4,9 +4,17 @@ import { db } from "@/lib/db";
 export async function GET() {
   let database = false;
   let databaseError: string | null = null;
+  let schemaTables: string[] = [];
   try {
     await db.$queryRaw`SELECT 1`;
     database = true;
+    const rows = await db.$queryRaw<Array<{ table_name: string }>>`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+      ORDER BY table_name
+    `;
+    schemaTables = rows.map((row) => row.table_name);
   } catch (error) {
     databaseError = error instanceof Error ? error.message.split("\n")[0].slice(0, 180) : "Database unavailable";
   }
@@ -14,12 +22,12 @@ export async function GET() {
   const present = (name: string) => Boolean(process.env[name]);
 
   return NextResponse.json({
-    ok: database && present("JWT_SECRET"),
+    ok: database,
     database,
     databaseError,
+    schemaTables,
     env: {
       nextPublicAppUrl: present("NEXT_PUBLIC_APP_URL"),
-      jwtSecret: present("JWT_SECRET"),
       mercadoPagoAccessToken: present("MERCADOPAGO_ACCESS_TOKEN"),
       mercadoPagoWebhookSecret: present("MERCADOPAGO_WEBHOOK_SECRET"),
       resendApiKey: present("RESEND_API_KEY"),
