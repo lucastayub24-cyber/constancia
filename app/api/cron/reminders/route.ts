@@ -1,3 +1,47 @@
-import {db} from "@/lib/db";import {pruneRateLimitEvents} from "@/lib/rate-limit";import {sendEmail} from "@/lib/email";import {moneyCents,appUrl} from "@/lib/utils";
-function authorized(request:Request){const secret=process.env.CRON_SECRET;if(!secret)return false;return request.headers.get("authorization")==="Bearer "+secret}
-export async function GET(request:Request){if(!authorized(request))return new Response("unauthorized",{status:401});await pruneRateLimitEvents();const now=new Date();const serviceUntil=new Date(now.getTime()+7*86400000);const paymentUntil=new Date(now.getTime()+86400000);const services=await db.certificate.findMany({where:{status:"ISSUED",nextServiceAt:{gte:now,lte:serviceUntil},reminderSentAt:null,organization:{plan:{in:["PRO","BUSINESS"]}}},include:{organization:true,client:true}});let serviceSent=0;for(const c of services){const to=c.organization.email;if(!to)continue;const res=await sendEmail(to,"Próximo service: "+(c.client?.name||c.serviceTitle),"<p>Se acerca un próximo service en Constancia.</p><p><b>"+c.serviceTitle+"</b><br>"+(c.client?.name||"Sin cliente")+"<br>Fecha: "+c.nextServiceAt?.toLocaleDateString("es-AR")+"</p><p><a href=\""+appUrl("/dashboard/constancia/"+c.id)+"\">Abrir constancia</a></p>");if(!res.skipped){await db.certificate.update({where:{id:c.id},data:{reminderSentAt:new Date()}});serviceSent++}}const dues=await db.certificate.findMany({where:{status:"ISSUED",paymentStatus:{in:["PENDING","PARTIAL"]},paymentDueDate:{lte:paymentUntil},paymentReminderSentAt:null,organization:{plan:{in:["PRO","BUSINESS"]}}},include:{organization:true,client:true,servicePayments:true}});let paymentSent=0;for(const c of dues){if(!c.organization.email||c.totalAmountCents===null)continue;const paid=c.servicePayments.reduce((s,p)=>s+p.amountCents,0n);const balance=c.totalAmountCents>paid?c.totalAmountCents-paid:0n;if(balance<=0n)continue;const res=await sendEmail(c.organization.email,"Saldo pendiente: "+(c.client?.name||c.serviceTitle),"<p>Constancia detectó un saldo pendiente.</p><p><b>"+c.serviceTitle+"</b><br>Cliente: "+(c.client?.name||"—")+"<br>Saldo: "+moneyCents(balance,c.currency)+"</p><p><a href=\""+appUrl("/dashboard/constancia/"+c.id)+"\">Registrar pago</a></p>");if(!res.skipped){await db.certificate.update({where:{id:c.id},data:{paymentReminderSentAt:new Date()}});paymentSent++}}return Response.json({ok:true,serviceSent,paymentSent})}
+import {NextResponse} from "next/server";import {db} from "@/lib/db";import {sendEmail} from "@/lib/email";import {PLAN_INFO} from "@/lib/plans";import {appUrl} from "@/lib/utils";
+
+function authorized(request:Request){
+  const secret=process.env.CRON_SECRET;
+  if(!secret)return false;
+  const auth=request.headers.get("authorization");
+  return auth==="Bearer "+secret;
+}
+
+export async function GET(request:Request){
+  if(!authorized(request))return NextResponse.json({error:"Unauthorized"},{status:401});
+  const now=new Date();
+  const until=new Date(now.getTime()+7*86400000);
+  const certificates=await db.certificate.findMany({
+    where:{
+      status:"ISSUED",
+      nextServiceAt:{gte:now,lte:until},
+      reminderSentAt:null,
+      organization:{plan:{in:["PRO","BUSINESS"]}},
+    },
+    include:{organization:true,client:true},
+    take:250,
+  });
+  let sent=0;
+  let skipped=0;
+  for(const c of certificates){
+    const target=c.organization.email;
+    if(!target){skipped++;continue}
+    const clientName=c.client?.name||"tu cliente";
+    const due=c.nextServiceAt!.toLocaleDateString("es-AR");
+    await sendEmail(
+      target,
+      "Próximo service: "+clientName+" · "+due,
+      "<p>Tenés un próximo service programado.</p><p><b>Cliente:</b> "+clientName+"<br/><b>Trabajo anterior:</b> "+c.serviceTitle+"<br/><b>Fecha sugerida:</b> "+due+"</p><p><a href=\""+appUrl("/dashboard/constancia/"+c.id)+"\">Abrir constancia</a></p>"
+    );
+    if(c.client?.email){
+      await sendEmail(
+        c.client.email,
+        "Recordatorio de próximo service · "+c.organization.name,
+        "<p>Hola "+c.client.name+",</p><p>"+c.organization.name+" dejó programado un próximo service para el <b>"+due+"</b>.</p><p>Podés coordinar directamente con el prestador.</p>"
+      ).catch(()=>null);
+    }
+    await db.certificate.update({where:{id:c.id},data:{reminderSentAt:new Date()}});
+    sent++;
+  }
+  return NextResponse.json({ok:true,found:certificates.length,sent,skipped});
+}
