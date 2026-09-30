@@ -1,0 +1,47 @@
+name: PageSpeed Mobile Audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/pagespeed.yml"
+      - "app/**"
+      - "components/**"
+      - "lib/**"
+      - "public/**"
+      - "next.config.ts"
+      - "package.json"
+
+jobs:
+  pagespeed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for production edge
+        run: sleep 15
+      - name: Run PageSpeed Insights mobile
+        env:
+          TARGET_URL: https://constancia-nu.vercel.app/
+        run: |
+          node <<'NODE'
+          const url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url="+encodeURIComponent(process.env.TARGET_URL)+"&strategy=mobile&category=performance&category=accessibility&category=best-practices&category=seo";
+          const res = await fetch(url);
+          console.log("PSI HTTP", res.status);
+          const j = await res.json();
+          if (!res.ok) {
+            console.log(JSON.stringify(j, null, 2));
+            process.exit(0);
+          }
+          const lr=j.lighthouseResult;
+          const out={
+            testedUrl:lr.finalUrl,
+            fetchTime:lr.fetchTime,
+            categories:Object.fromEntries(Object.entries(lr.categories).map(([k,v])=>[k,Math.round((v.score||0)*100)])),
+            metrics:Object.fromEntries(["first-contentful-paint","largest-contentful-paint","speed-index","total-blocking-time","cumulative-layout-shift","interactive"].map(k=>[k,lr.audits[k]&&{score:lr.audits[k].score,displayValue:lr.audits[k].displayValue,numericValue:lr.audits[k].numericValue}])),
+            failures:Object.entries(lr.audits)
+              .filter(([_,v])=>v.scoreDisplayMode!=="notApplicable"&&v.scoreDisplayMode!=="manual"&&v.score!==null&&v.score<1)
+              .map(([id,v])=>({id,title:v.title,score:v.score,displayValue:v.displayValue,savingsMs:v.details?.overallSavingsMs,savingsBytes:v.details?.overallSavingsBytes}))
+          };
+          console.log("PAGESPEED_RESULT_START");
+          console.log(JSON.stringify(out,null,2));
+          console.log("PAGESPEED_RESULT_END");
+          NODE
