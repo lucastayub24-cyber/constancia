@@ -1,4 +1,4 @@
-const VERSION="v2";
+const VERSION="v3";
 const STATIC_CACHE="constancia-static-"+VERSION;
 const PRIVATE_CACHE="constancia-private-"+VERSION;
 const DB_NAME="constancia-offline";
@@ -71,9 +71,21 @@ self.addEventListener("sync",event=>{
   if(event.tag==="constancia-sync")event.waitUntil(flushQueue());
 });
 
+async function warmPrivateCache(){
+  const cache=await caches.open(PRIVATE_CACHE);
+  const urls=["/dashboard","/dashboard/nueva","/dashboard/clientes","/dashboard/constancias"];
+  for(const url of urls){
+    try{
+      const response=await fetch(url,{credentials:"include",headers:{"Accept":"text/html"}});
+      if(response.ok)await cache.put(url,response.clone());
+    }catch{}
+  }
+}
+
 self.addEventListener("message",event=>{
   if(event.data&&event.data.type==="FLUSH_QUEUE")event.waitUntil(flushQueue());
   if(event.data&&event.data.type==="CLEAR_PRIVATE_CACHE")event.waitUntil(caches.delete(PRIVATE_CACHE));
+  if(event.data&&event.data.type==="WARM_PRIVATE_CACHE")event.waitUntil(warmPrivateCache());
 });
 
 self.addEventListener("fetch",event=>{
@@ -97,7 +109,7 @@ self.addEventListener("fetch",event=>{
         }
         return response;
       }catch{
-        const hit=await caches.match(req);
+        const hit=await caches.match(req,{ignoreVary:true})||await caches.match(url.pathname,{ignoreVary:true});
         return hit||await caches.match("/offline")||new Response("Sin conexión",{status:503,headers:{"Content-Type":"text/plain;charset=utf-8"}});
       }
     })());
