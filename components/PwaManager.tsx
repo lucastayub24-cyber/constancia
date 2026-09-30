@@ -12,7 +12,10 @@ export function PwaManager(){
   useEffect(()=>{
     setOnline(navigator.onLine);
     if("serviceWorker" in navigator){
-      navigator.serviceWorker.register("/sw.js",{scope:"/"}).catch(()=>undefined);
+      navigator.serviceWorker.register("/sw.js",{scope:"/"}).then(async()=>{
+        const reg=await navigator.serviceWorker.ready;
+        reg.active?.postMessage({type:"WARM_PRIVATE_CACHE"});
+      }).catch(()=>undefined);
     }
   },[]);
 
@@ -34,8 +37,7 @@ export function PwaManager(){
     if(navigator.onLine)sync();
 
     if(pathname.startsWith("/dashboard")&&navigator.onLine){
-      ["/dashboard","/dashboard/nueva","/dashboard/clientes","/dashboard/constancias"]
-        .forEach(url=>fetch(url,{credentials:"include",headers:{"X-Constancia-Warm":"1"}}).catch(()=>undefined));
+      navigator.serviceWorker?.ready.then(reg=>reg.active?.postMessage({type:"WARM_PRIVATE_CACHE"})).catch(()=>undefined);
     }
     return()=>{
       active=false;
