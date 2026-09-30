@@ -11,10 +11,18 @@ const securityHeaders=[
 
 const nextConfig: NextConfig = {
   poweredByHeader:false,
+  compress:true,
   experimental:{serverActions:{bodySizeLimit:"5mb"}},
   images:{remotePatterns:[{protocol:"https",hostname:"**"}]},
   async headers(){return [
-    {source:"/sw.js",headers:[{key:"Cache-Control",value:"no-cache, no-store, must-revalidate"},{key:"Service-Worker-Allowed",value:"/"}]},
+    {source:"/sw.js",headers:[
+      {key:"Cache-Control",value:"no-cache, no-store, must-revalidate"},
+      {key:"Service-Worker-Allowed",value:"/"}
+    ]},
+    {source:"/brand/:path*",headers:[
+      {key:"Cache-Control",value:"public, max-age=31536000, immutable"},
+      ...securityHeaders
+    ]},
     {source:"/:path*",headers:securityHeaders}
   ]}
 };
