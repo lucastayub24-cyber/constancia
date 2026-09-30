@@ -16,7 +16,7 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ["business","productivity","utilities"],
     icons: [
       { src: "/brand/constancia-app-icon.svg", sizes: "192x192", type: "image/svg+xml", purpose: "any" },
-      { src: "/brand/constancia-app-icon.svg", sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" },
+      { src: "/brand/constancia-app-icon.svg", sizes: "512x512", type: "image/svg+xml", purpose: "maskable" },
       { src: "/brand/constancia-app-icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" }
     ],
     shortcuts: [
