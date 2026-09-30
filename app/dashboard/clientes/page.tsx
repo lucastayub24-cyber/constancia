@@ -1,0 +1,1 @@
+import {ClientManager} from "@/components/ClientManager";export default function ClientsPage(){return <><header className="page-head"><div><div className="eyebrow">CLIENTES</div><h1>Tu cartera</h1><p>Alta, edición y datos asociados al historial de trabajos.</p></div></header><ClientManager/></>}

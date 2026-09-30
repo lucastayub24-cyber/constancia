@@ -1,4 +1,50 @@
 "use client";
-import {useState} from "react";import {useRouter} from "next/navigation";
-export function LoginForm(){const r=useRouter();const[e,setE]=useState("");async function submit(ev:React.FormEvent<HTMLFormElement>){ev.preventDefault();setE("");const f=new FormData(ev.currentTarget);const res=await fetch("/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.fromEntries(f))});const j=await res.json();if(!res.ok)return setE(j.error||"No se pudo ingresar");r.push("/dashboard");r.refresh()}return <form className="form" onSubmit={submit}>{e&&<div className="error">{e}</div>}<div className="field"><label>Email</label><input className="input" name="email" type="email" required/></div><div className="field"><label>Contraseña</label><input className="input" name="password" type="password" required/></div><button className="btn btn-brand">Ingresar</button></form>}
-export function RegisterForm(){const r=useRouter();const[e,setE]=useState("");async function submit(ev:React.FormEvent<HTMLFormElement>){ev.preventDefault();setE("");const f=new FormData(ev.currentTarget);const res=await fetch("/api/auth/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.fromEntries(f))});const j=await res.json();if(!res.ok)return setE(j.error||"No se pudo crear la cuenta");r.push("/dashboard");r.refresh()}return <form className="form" onSubmit={submit}>{e&&<div className="error">{e}</div>}<div className="field"><label>Tu nombre</label><input className="input" name="name" required/></div><div className="field"><label>Empresa o actividad</label><input className="input" name="organizationName" placeholder="Ej. Refrigeración Pérez" required/></div><div className="field"><label>Email</label><input className="input" name="email" type="email" required/></div><div className="field"><label>Contraseña</label><input className="input" name="password" type="password" minLength={8} required/></div><button className="btn btn-brand">Crear cuenta gratis</button></form>}
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+async function api(path:string, body:unknown){
+  const res=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.error||"Ocurrió un error");
+  return data;
+}
+
+export function LoginForm(){
+  const router=useRouter();
+  const [error,setError]=useState("");
+  const [busy,setBusy]=useState(false);
+  async function submit(e:React.FormEvent<HTMLFormElement>){
+    e.preventDefault();setBusy(true);setError("");
+    const f=new FormData(e.currentTarget);
+    try{await api("/api/auth/login",{email:f.get("email"),password:f.get("password")});router.push("/dashboard");router.refresh()}
+    catch(err){setError(err instanceof Error?err.message:"No se pudo ingresar")}
+    finally{setBusy(false)}
+  }
+  return <form className="form" onSubmit={submit}>
+    {error&&<div className="error">{error}</div>}
+    <div className="field"><label>Email</label><input className="input" name="email" type="email" required autoComplete="email"/></div>
+    <div className="field"><label>Contraseña</label><input className="input" name="password" type="password" required autoComplete="current-password"/></div>
+    <button className="btn btn-brand" disabled={busy}>{busy?"Ingresando...":"Ingresar"}</button>
+  </form>
+}
+
+export function RegisterForm(){
+  const router=useRouter();
+  const [error,setError]=useState("");
+  const [busy,setBusy]=useState(false);
+  async function submit(e:React.FormEvent<HTMLFormElement>){
+    e.preventDefault();setBusy(true);setError("");
+    const f=new FormData(e.currentTarget);
+    try{await api("/api/auth/register",{name:f.get("name"),organizationName:f.get("organizationName"),email:f.get("email"),password:f.get("password")});router.push("/dashboard");router.refresh()}
+    catch(err){setError(err instanceof Error?err.message:"No se pudo crear la cuenta")}
+    finally{setBusy(false)}
+  }
+  return <form className="form" onSubmit={submit}>
+    {error&&<div className="error">{error}</div>}
+    <div className="field"><label>Tu nombre</label><input className="input" name="name" required/></div>
+    <div className="field"><label>Empresa o actividad</label><input className="input" name="organizationName" placeholder="Ej. Refrigeración Pérez" required/></div>
+    <div className="field"><label>Email</label><input className="input" name="email" type="email" required autoComplete="email"/></div>
+    <div className="field"><label>Contraseña</label><input className="input" name="password" type="password" minLength={8} required autoComplete="new-password"/></div>
+    <button className="btn btn-brand" disabled={busy}>{busy?"Creando...":"Crear cuenta gratis"}</button>
+  </form>
+}
