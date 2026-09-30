@@ -36,6 +36,28 @@ jobs:
         if: steps.prisma.outcome == 'failure'
         run: exit 1
       - name: Typecheck
-        run: npm run typecheck
+        id: typecheck
+        continue-on-error: true
+        run: npm run typecheck > typecheck.log 2>&1
+      - name: Upload TypeScript diagnostics
+        if: steps.typecheck.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: typescript-diagnostics
+          path: typecheck.log
+      - name: Stop on TypeScript error
+        if: steps.typecheck.outcome == 'failure'
+        run: exit 1
       - name: Build
-        run: npm run build
+        id: build
+        continue-on-error: true
+        run: npm run build > build.log 2>&1
+      - name: Upload build diagnostics
+        if: steps.build.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-diagnostics
+          path: build.log
+      - name: Stop on build error
+        if: steps.build.outcome == 'failure'
+        run: exit 1
