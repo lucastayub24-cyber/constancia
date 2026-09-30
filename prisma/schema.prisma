@@ -7,15 +7,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum AppRole { ADMIN USER }
-enum MembershipRole { OWNER ADMIN MEMBER }
-enum Plan { FREE PROFESSIONAL PRO BUSINESS }
-enum SubscriptionStatus { INACTIVE PENDING ACTIVE PAUSED CANCELED PAYMENT_FAILED }
-enum CertificateStatus { DRAFT ISSUED VOID }
-enum ServicePaymentStatus { NO_AMOUNT PENDING PARTIAL PAID }
-enum ServicePaymentMethod { CASH BANK_TRANSFER MERCADO_PAGO DEBIT_CARD CREDIT_CARD CHECK OTHER }
-enum LegalRequestType { WITHDRAWAL CANCELLATION PRIVACY }
-enum LegalRequestStatus { OPEN IN_REVIEW RESOLVED REJECTED }
+enum AppRole {\n  ADMIN\n  USER\n}
+enum MembershipRole {\n  OWNER\n  ADMIN\n  MEMBER\n}
+enum Plan {\n  FREE\n  PROFESSIONAL\n  PRO\n  BUSINESS\n}
+enum SubscriptionStatus {\n  INACTIVE\n  PENDING\n  ACTIVE\n  PAUSED\n  CANCELED\n  PAYMENT_FAILED\n}
+enum CertificateStatus {\n  DRAFT\n  ISSUED\n  VOID\n}
+enum ServicePaymentStatus {\n  NO_AMOUNT\n  PENDING\n  PARTIAL\n  PAID\n}
+enum ServicePaymentMethod {\n  CASH\n  BANK_TRANSFER\n  MERCADO_PAGO\n  DEBIT_CARD\n  CREDIT_CARD\n  CHECK\n  OTHER\n}
+enum LegalRequestType {\n  WITHDRAWAL\n  CANCELLATION\n  PRIVACY\n}
+enum LegalRequestStatus {\n  OPEN\n  IN_REVIEW\n  RESOLVED\n  REJECTED\n}
 
 model User {
   id                   String         @id @default(cuid())
