@@ -1,2 +1,3 @@
 Constancia production deploy trigger
-2026-10-01 10:09 America/Argentina/Buenos_Aires
+2026-10-01 15:10 America/Argentina/Buenos_Aires
+Mercado Pago OAuth environment refresh
