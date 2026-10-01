@@ -29,6 +29,7 @@ export const certificateSchema=z.object({
   warrantyUntil:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
   signatureDataUrl:z.string().max(900000).optional().or(z.literal("")),
   signatureName:z.string().trim().max(160).optional(),
+  signatureDocument:z.string().trim().max(80).optional(),
   photoKeys:z.array(z.string().max(500000)).max(6).default([]),
   totalAmount:z.union([z.number(),z.string()]).optional(),
   paymentDueDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().or(z.literal("")),
