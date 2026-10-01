@@ -1,0 +1,2 @@
+import {db} from "@/lib/db";import {activeOrganization} from "@/lib/org";import {AssetManager} from "@/components/AssetManager";
+export default async function AssetsPage(){const{organization}=await activeOrganization();const clients=await db.client.findMany({where:{organizationId:organization.id},select:{id:true,name:true},orderBy:{name:"asc"}});return <><header className="page-head"><div><div className="eyebrow">ACTIVOS</div><h1>Equipos y máquinas</h1><p>Cada activo tiene identidad, historial y QR físico propio.</p></div></header><AssetManager clients={clients}/></>}

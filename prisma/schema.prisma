@@ -50,6 +50,44 @@ enum ServicePaymentMethod {
   CHECK
   OTHER
 }
+enum AssetStatus {
+  ACTIVE
+  INACTIVE
+  RETIRED
+}
+enum WorkOrderStatus {
+  SCHEDULED
+  EN_ROUTE
+  IN_PROGRESS
+  WAITING_PART
+  COMPLETED
+  CANCELED
+}
+enum WorkOrderPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+enum QuoteStatus {
+  DRAFT
+  SENT
+  APPROVED
+  REJECTED
+  EXPIRED
+  CONVERTED
+}
+enum ContractStatus {
+  ACTIVE
+  PAUSED
+  ENDED
+}
+enum NotificationType {
+  WORK_ORDER
+  SERVICE_DUE
+  PAYMENT
+  SYSTEM
+}
 enum LegalRequestType {
   WITHDRAWAL
   CANCELLATION
@@ -77,6 +115,9 @@ model User {
   legalRequests        LegalRequest[]
   resetTokens          PasswordResetToken[]
   sessions             Session[]
+  createdWorkOrders    WorkOrder[] @relation("WorkOrderCreator")
+  assignedWorkOrders   WorkOrder[] @relation("WorkOrderAssignee")
+  notifications        Notification[]
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
   @@index([activeOrganizationId])
@@ -118,6 +159,12 @@ model Organization {
   subscriptionPayments    SubscriptionPayment[]
   teamInvites             TeamInvite[]
   legalRequests           LegalRequest[]
+  assets                  Asset[]
+  workOrders              WorkOrder[]
+  serviceTemplates        ServiceTemplate[]
+  quotes                  Quote[]
+  maintenanceContracts    MaintenanceContract[]
+  notifications           Notification[]
 }
 
 model Membership {
@@ -142,6 +189,11 @@ model Client {
   taxId String?
   address String?
   notes String?
+  portalCode String? @unique
+  assets Asset[]
+  workOrders WorkOrder[]
+  quotes Quote[]
+  maintenanceContracts MaintenanceContract[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   certificates Certificate[]
@@ -154,6 +206,10 @@ model Certificate {
   organization Organization @relation(fields:[organizationId],references:[id],onDelete:Cascade)
   clientId String?
   client Client? @relation(fields:[clientId],references:[id],onDelete:SetNull)
+  assetId String?
+  asset Asset? @relation(fields:[assetId],references:[id],onDelete:SetNull)
+  workOrderId String? @unique
+  workOrder WorkOrder? @relation(fields:[workOrderId],references:[id],onDelete:SetNull)
   createdByUserId String
   createdBy User @relation("CertificateCreator",fields:[createdByUserId],references:[id],onDelete:Restrict)
   sequentialNumber Int
@@ -166,6 +222,7 @@ model Certificate {
   serviceAddress String?
   performedAt DateTime @default(now())
   nextServiceAt DateTime?
+  warrantyUntil DateTime?
   reminderSentAt DateTime?
   signatureDataUrl String? @db.Text
   signatureName String?
@@ -183,6 +240,8 @@ model Certificate {
   @@unique([organizationId,sequentialNumber])
   @@index([organizationId,performedAt])
   @@index([organizationId,paymentStatus])
+  @@index([assetId])
+  @@index([workOrderId])
   @@index([nextServiceAt,reminderSentAt])
   @@index([paymentDueDate,paymentReminderSentAt])
 }
@@ -271,6 +330,170 @@ model PasswordResetToken {
   @@index([userId,expiresAt])
 }
 
+
+
+model Asset {
+  id String @id @default(cuid())
+  organizationId String
+  organization Organization @relation(fields:[organizationId],references:[id],onDelete:Cascade)
+  clientId String
+  client Client @relation(fields:[clientId],references:[id],onDelete:Cascade)
+  assetNumber Int
+  publicCode String @unique
+  name String
+  category String?
+  brand String?
+  model String?
+  serialNumber String?
+  location String?
+  notes String? @db.Text
+  status AssetStatus @default(ACTIVE)
+  installedAt DateTime?
+  warrantyUntil DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  certificates Certificate[]
+  workOrders WorkOrder[]
+  maintenanceContracts MaintenanceContract[]
+  @@unique([organizationId,assetNumber])
+  @@index([organizationId,clientId])
+  @@index([organizationId,name])
+  @@index([serialNumber])
+}
+
+model ServiceTemplate {
+  id String @id @default(cuid())
+  organizationId String
+  organization Organization @relation(fields:[organizationId],references:[id],onDelete:Cascade)
+  name String
+  category String?
+  defaultTitle String
+  defaultDescription String @db.Text
+  checklist Json?
+  defaultDurationMinutes Int?
+  defaultNextServiceDays Int?
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  workOrders WorkOrder[]
+  @@index([organizationId,name])
+}
+
+model WorkOrder {
+  id String @id @default(cuid())
+  organizationId String
+  organization Organization @relation(fields:[organizationId],references:[id],onDelete:Cascade)
+  sequentialNumber Int
+  clientId String
+  client Client @relation(fields:[clientId],references:[id],onDelete:Cascade)
+  assetId String?
+  asset Asset? @relation(fields:[assetId],references:[id],onDelete:SetNull)
+  templateId String?
+  template ServiceTemplate? @relation(fields:[templateId],references:[id],onDelete:SetNull)
+  createdByUserId String
+  createdBy User @relation("WorkOrderCreator",fields:[createdByUserId],references:[id],onDelete:Restrict)
+  assignedUserId String?
+  assignedUser User? @relation("WorkOrderAssignee",fields:[assignedUserId],references:[id],onDelete:SetNull)
+  status WorkOrderStatus @default(SCHEDULED)
+  priority WorkOrderPriority @default(NORMAL)
+  title String
+  description String @db.Text
+  serviceAddress String?
+  scheduledStart DateTime?
+  scheduledEnd DateTime?
+  startedAt DateTime?
+  completedAt DateTime?
+  internalNotes String? @db.Text
+  checklistResults Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  certificate Certificate?
+  materials WorkOrderMaterial[]
+  @@unique([organizationId,sequentialNumber])
+  @@index([organizationId,status,scheduledStart])
+  @@index([assignedUserId,scheduledStart])
+  @@index([assetId])
+}
+
+model WorkOrderMaterial {
+  id String @id @default(cuid())
+  workOrderId String
+  workOrder WorkOrder @relation(fields:[workOrderId],references:[id],onDelete:Cascade)
+  name String
+  quantity Decimal @db.Decimal(12,3)
+  unit String?
+  unitCostCents BigInt?
+  createdAt DateTime @default(now())
+  @@index([workOrderId])
+}
+
+model Quote {
+  id String @id @default(cuid())
+  organizationId String
+  organization Organization @relation(fields:[organizationId],references:[id],onDelete:Cascade)
+  clientId String
+  client Client @relation(fields:[clientId],references:[id],onDelete:Cascade)
+  sequentialNumber Int
+  status QuoteStatus @default(DRAFT)
+  title String
+  notes String? @db.Text
+  validUntil DateTime?
+  currency String @default("ARS")
+  totalAmountCents BigInt @default(0)
+  publicCode String @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  items QuoteItem[]
+  @@unique([organizationId,sequentialNumber])
+  @@index([organizationId,status,createdAt])
+}
+
+model QuoteItem {
+  id String @id @default(cuid())
+  quoteId String
+  quote Quote @relation(fields:[quoteId],references:[id],onDelete:Cascade)
+  description String
+  quantity Decimal @db.Decimal(12,3)
+  unitPriceCents BigInt
+  sortOrder Int @default(0)
+}
+
+model MaintenanceContract {
+  id String @id @default(cuid())
+  organizationId String
+  organization Organization @relation(fields:[organizationId],references:[id],onDelete:Cascade)
+  clientId String
+  client Client @relation(fields:[clientId],references:[id],onDelete:Cascade)
+  assetId String?
+  asset Asset? @relation(fields:[assetId],references:[id],onDelete:SetNull)
+  name String
+  status ContractStatus @default(ACTIVE)
+  frequencyDays Int
+  startAt DateTime
+  endAt DateTime?
+  nextVisitAt DateTime?
+  monthlyAmountCents BigInt?
+  notes String? @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([organizationId,status,nextVisitAt])
+}
+
+model Notification {
+  id String @id @default(cuid())
+  organizationId String
+  organization Organization @relation(fields:[organizationId],references:[id],onDelete:Cascade)
+  userId String?
+  user User? @relation(fields:[userId],references:[id],onDelete:Cascade)
+  type NotificationType
+  title String
+  body String @db.Text
+  href String?
+  readAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([organizationId,createdAt])
+  @@index([userId,readAt])
+}
 
 model RateLimitEvent {
   id        String   @id @default(cuid())

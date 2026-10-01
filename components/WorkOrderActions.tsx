@@ -1,0 +1,4 @@
+"use client";
+import {useRouter} from "next/navigation";
+const actions=[["EN_ROUTE","En camino"],["IN_PROGRESS","Iniciar"],["WAITING_PART","Esperando repuesto"],["COMPLETED","Completar"],["CANCELED","Cancelar"]] as const;
+export function WorkOrderActions({id,status}:{id:string;status:string}){const r=useRouter();async function set(next:string){const res=await fetch("/api/work-orders/"+id,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:next})});if(res.ok)r.refresh()}return <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{actions.filter(([x])=>x!==status).map(([x,label])=><button key={x} type="button" className={"btn "+(x==="CANCELED"?"btn-danger":"btn-light")} onClick={()=>set(x)}>{label}</button>)}</div>}

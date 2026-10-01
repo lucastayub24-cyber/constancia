@@ -1,0 +1,1 @@
+import {TemplateManager} from "@/components/TemplateManager";export default function TemplatesPage(){return <><header className="page-head"><div><div className="eyebrow">PLANTILLAS</div><h1>Trabajos repetibles.</h1><p>Prearmá descripción, checklist, duración y frecuencia de mantenimiento.</p></div></header><TemplateManager/></>}
