@@ -12,7 +12,7 @@ export async function createDemoWorkspace(tx:Prisma.TransactionClient,input:{org
   const started=new Date(now.getTime()-105*60*1000);
   const completed=new Date(now.getTime()-25*60*1000);
 
-  const client=await tx.client.create({data:{
+  const [lastAsset,lastQuote,lastOrder,lastCertificate]=await Promise.all([\n    tx.asset.findFirst({where:{organizationId:input.organizationId},orderBy:{assetNumber:"desc"},select:{assetNumber:true}}),\n    tx.quote.findFirst({where:{organizationId:input.organizationId},orderBy:{sequentialNumber:"desc"},select:{sequentialNumber:true}}),\n    tx.workOrder.findFirst({where:{organizationId:input.organizationId},orderBy:{sequentialNumber:"desc"},select:{sequentialNumber:true}}),\n    tx.certificate.findFirst({where:{organizationId:input.organizationId},orderBy:{sequentialNumber:"desc"},select:{sequentialNumber:true}}),\n  ]);\n  const assetNumber=(lastAsset?.assetNumber??0)+1;\n  const quoteNumber=(lastQuote?.sequentialNumber??0)+1;\n  const orderNumber=(lastOrder?.sequentialNumber??0)+1;\n  const certificateNumber=(lastCertificate?.sequentialNumber??0)+1;\n\n  const client=await tx.client.create({data:{
     organizationId:input.organizationId,
     name:"Metalúrgica Norte · Ejemplo",
     email:"compras@metalurgicanorte.demo",
@@ -24,7 +24,7 @@ export async function createDemoWorkspace(tx:Prisma.TransactionClient,input:{org
   }});
 
   const asset=await tx.asset.create({data:{
-    organizationId:input.organizationId,clientId:client.id,assetNumber:1,
+    organizationId:input.organizationId,clientId:client.id,assetNumber,
     publicCode:"demo-"+randomUUID().slice(0,14),name:"Compresor principal",
     category:"Compresor industrial",brand:"Atlas",model:"GA 15",serialNumber:"AC-845921",
     location:"Planta 1 · Sala de máquinas",notes:DEMO_MARKER+" Activo de ejemplo.",
@@ -40,7 +40,7 @@ export async function createDemoWorkspace(tx:Prisma.TransactionClient,input:{org
   }});
 
   const quote=await tx.quote.create({data:{
-    organizationId:input.organizationId,clientId:client.id,sequentialNumber:1,status:"APPROVED",
+    organizationId:input.organizationId,clientId:client.id,sequentialNumber:quoteNumber,status:"APPROVED",
     title:"Service preventivo + cambio de filtro",notes:DEMO_MARKER+" Presupuesto de ejemplo.",validUntil:quoteValid,
     currency:"ARS",totalAmountCents:18500000n,publicCode:"demo-"+randomUUID().slice(0,14),
     items:{create:[
@@ -50,7 +50,7 @@ export async function createDemoWorkspace(tx:Prisma.TransactionClient,input:{org
   }});
 
   const order=await tx.workOrder.create({data:{
-    organizationId:input.organizationId,sequentialNumber:1,clientId:client.id,assetId:asset.id,templateId:template.id,
+    organizationId:input.organizationId,sequentialNumber:orderNumber,clientId:client.id,assetId:asset.id,templateId:template.id,
     createdByUserId:input.userId,assignedUserId:input.userId,status:"COMPLETED",priority:"NORMAL",
     title:"Mantenimiento preventivo trimestral",description:"Inspección, limpieza, cambio de filtro y prueba final.",
     serviceAddress:client.address,scheduledStart:started,scheduledEnd:completed,startedAt:started,completedAt:completed,
@@ -64,7 +64,7 @@ export async function createDemoWorkspace(tx:Prisma.TransactionClient,input:{org
 
   const certificate=await tx.certificate.create({data:{
     organizationId:input.organizationId,clientId:client.id,assetId:asset.id,workOrderId:order.id,createdByUserId:input.userId,
-    sequentialNumber:1,code:"demo-"+randomUUID().replace(/-/g,"").slice(0,18),status:"ISSUED",
+    sequentialNumber:certificateNumber,code:"demo-"+randomUUID().replace(/-/g,"").slice(0,18),status:"ISSUED",
     serviceTitle:"Mantenimiento preventivo trimestral",
     description:"Se realizó limpieza general, cambio de filtro, control de conexiones y prueba operativa.",
     observations:DEMO_MARKER+" Constancia de ejemplo. Todo este circuito fue creado para que veas cómo se relacionan los módulos.",
