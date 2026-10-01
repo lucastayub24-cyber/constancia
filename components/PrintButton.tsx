@@ -1,0 +1,1 @@
+"use client";export function PrintButton(){return <button className="btn btn-light no-print" type="button" onClick={()=>window.print()}>Imprimir / guardar PDF</button>}
