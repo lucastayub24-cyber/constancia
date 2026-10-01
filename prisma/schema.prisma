@@ -154,6 +154,14 @@ model Organization {
   subscriptionStatus      SubscriptionStatus @default(INACTIVE)
   mpSubscriptionId        String?            @unique
   mpPayerEmail            String?
+  mpSellerUserId          String?
+  mpSellerPublicKey       String?
+  mpSellerAccessTokenEnc  String?            @db.Text
+  mpSellerRefreshTokenEnc String?            @db.Text
+  mpSellerTokenExpiresAt  DateTime?
+  mpSellerConnectedAt     DateTime?
+  mpSellerScope           String?
+  mpSellerLiveMode        Boolean?
   subscriptionCurrentEnd  DateTime?
   createdAt               DateTime           @default(now())
   updatedAt               DateTime           @updatedAt
