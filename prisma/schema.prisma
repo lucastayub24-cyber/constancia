@@ -231,6 +231,9 @@ model Certificate {
   reminderSentAt DateTime?
   signatureDataUrl String? @db.Text
   signatureName String?
+  signatureDocument String?
+  signatureIp String?
+  signatureUserAgent String? @db.Text
   customerAcceptedAt DateTime?
   totalAmountCents BigInt?
   currency String @default("ARS")
