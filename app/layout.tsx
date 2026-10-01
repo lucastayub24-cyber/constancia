@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://constancia-nu.vercel.app"),
   applicationName: "Constancia",
   title: {
-    default: "Constancia — Trabajos documentados",
+    default: "Constancia — Gestión de servicios de punta a punta",
     template: "%s | Constancia",
   },
   description: "Gestioná clientes, equipos, presupuestos, órdenes, técnicos, evidencia, constancias, cobros y próximos services en un solo sistema.",
@@ -16,8 +16,8 @@ export const metadata: Metadata = {
     locale: "es_AR",
     url: "/",
     siteName: "Constancia",
-    title: "Constancia — Hiciste el trabajo. Dejá constancia.",
-    description: "Clientes, activos, órdenes, técnicos, evidencia, constancias verificables, cobros y próximos services en un solo sistema.",
+    title: "Constancia — Trabajá, documentá, cobrá y volvé a vender.",
+    description: "Clientes, activos, presupuestos, órdenes, técnicos, evidencia, constancias, cobros, contratos y próximos services en un solo sistema.",
   },
   manifest: "/manifest.webmanifest",
   icons: {
