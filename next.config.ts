@@ -14,13 +14,6 @@ const nextConfig: NextConfig = {
   compress: true,
   experimental: { serverActions: { bodySizeLimit: "5mb" } },
   images: { remotePatterns: [{ protocol: "https", hostname: "**" }] },
-  async rewrites() {
-    return {
-      beforeFiles: [{ source: "/", destination: "/landing.html" }],
-      afterFiles: [],
-      fallback: [],
-    };
-  },
   async headers() {
     return [
       {
