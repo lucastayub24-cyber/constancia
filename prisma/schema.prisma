@@ -69,6 +69,11 @@ enum WorkOrderPriority {
   HIGH
   URGENT
 }
+enum WorkOrderPhotoStage {
+  BEFORE
+  DURING
+  AFTER
+}
 enum QuoteStatus {
   DRAFT
   SENT
@@ -405,14 +410,35 @@ model WorkOrder {
   completedAt DateTime?
   internalNotes String? @db.Text
   checklistResults Json?
+  startLatitude Float?
+  startLongitude Float?
+  endLatitude Float?
+  endLongitude Float?
+  startAccuracyMeters Float?
+  endAccuracyMeters Float?
+  startedUserAgent String? @db.Text
+  completedUserAgent String? @db.Text
+  executionNotes String? @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   certificate Certificate?
   materials WorkOrderMaterial[]
+  photos WorkOrderPhoto[]
   @@unique([organizationId,sequentialNumber])
   @@index([organizationId,status,scheduledStart])
   @@index([assignedUserId,scheduledStart])
   @@index([assetId])
+}
+
+model WorkOrderPhoto {
+  id String @id @default(cuid())
+  workOrderId String
+  workOrder WorkOrder @relation(fields:[workOrderId],references:[id],onDelete:Cascade)
+  storageKey String @db.Text
+  stage WorkOrderPhotoStage
+  sortOrder Int @default(0)
+  createdAt DateTime @default(now())
+  @@index([workOrderId,stage])
 }
 
 model WorkOrderMaterial {
