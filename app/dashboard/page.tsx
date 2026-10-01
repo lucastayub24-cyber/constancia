@@ -1,11 +1,11 @@
 import Link from "next/link";
 import {ArrowUpRight,CalendarDays,CircleDollarSign,ClipboardList,PackageSearch,UsersRound,Wrench} from "lucide-react";
-import {db} from "@/lib/db";import {activeOrganization} from "@/lib/org";import {moneyCents} from "@/lib/utils";
+import {db} from "@/lib/db";import {activeOrganization} from "@/lib/org";import {moneyCents} from "@/lib/utils";import {DemoOnboarding} from "@/components/DemoOnboarding";import {DEMO_MARKER} from "@/lib/demo-data";
 
 const statusLabels:Record<string,string>={SCHEDULED:"Programada",EN_ROUTE:"En camino",IN_PROGRESS:"En curso",WAITING_PART:"Esperando repuesto",COMPLETED:"Completada",CANCELED:"Cancelada"};
 export default async function Dashboard(){
  const{organization}=await activeOrganization();const now=new Date();const monthStart=new Date(now.getFullYear(),now.getMonth(),1);const todayStart=new Date(now);todayStart.setHours(0,0,0,0);const tomorrow=new Date(todayStart);tomorrow.setDate(tomorrow.getDate()+1);const next7=new Date(todayStart);next7.setDate(next7.getDate()+7);
- const[clients,assets,orders,certs,payments,todayOrders,upcoming,contracts]=await Promise.all([
+ const[clients,assets,orders,certs,payments,todayOrders,upcoming,contracts,demoClients]=await Promise.all([
   db.client.count({where:{organizationId:organization.id}}),
   db.asset.count({where:{organizationId:organization.id,status:"ACTIVE"}}),
   db.workOrder.findMany({where:{organizationId:organization.id},include:{client:true,asset:true,assignedUser:true},orderBy:{createdAt:"desc"},take:100}),
@@ -13,7 +13,8 @@ export default async function Dashboard(){
   db.certificatePayment.findMany({where:{certificate:{organizationId:organization.id},paidAt:{gte:monthStart}},select:{amountCents:true}}),
   db.workOrder.findMany({where:{organizationId:organization.id,status:{notIn:["COMPLETED","CANCELED"]},scheduledStart:{gte:todayStart,lt:tomorrow}},include:{client:true,asset:true,assignedUser:true},orderBy:{scheduledStart:"asc"}}),
   db.workOrder.findMany({where:{organizationId:organization.id,status:{notIn:["COMPLETED","CANCELED"]},scheduledStart:{gte:tomorrow,lte:next7}},include:{client:true,asset:true},orderBy:{scheduledStart:"asc"},take:6}),
-  db.maintenanceContract.count({where:{organizationId:organization.id,status:"ACTIVE"}})
+  db.maintenanceContract.count({where:{organizationId:organization.id,status:"ACTIVE"}}),
+  db.client.count({where:{organizationId:organization.id,notes:{contains:DEMO_MARKER}}})
  ]);
  const monthCerts=certs.filter(c=>c.createdAt>=monthStart);const billed=monthCerts.reduce((s,c)=>s+(c.totalAmountCents||0n),0n);const collected=payments.reduce((s,p)=>s+p.amountCents,0n);
  const outstanding=certs.reduce((s,c)=>{if(c.totalAmountCents===null)return s;const paid=c.servicePayments.reduce((a,p)=>a+p.amountCents,0n);return s+(c.totalAmountCents>paid?c.totalAmountCents-paid:0n)},0n);
@@ -21,7 +22,7 @@ export default async function Dashboard(){
  const materialCost=monthCerts.reduce((sum,c)=>sum+(c.workOrder?.materials||[]).reduce((s,m)=>s+(m.unitCostCents?BigInt(Math.round(Number(m.quantity)*1000))*m.unitCostCents/1000n:0n),0n),0n);
  const margin=billed>materialCost?billed-materialCost:0n;const collectionRate=billed>0n?Math.min(100,Math.round(Number(collected*10000n/billed)/100)):0;
  const dueSoon=certs.filter(c=>c.nextServiceAt&&c.nextServiceAt>=now&&c.nextServiceAt<=next7).length;
- return <><header className="page-head dashboard-head"><div><div className="eyebrow">CENTRO DE OPERACIONES</div><h1>{organization.name}</h1><p>Una vista rápida de trabajo, caja y próximos movimientos.</p></div><div className="dashboard-actions"><Link className="btn btn-light" href="/dashboard/ordenes"><ClipboardList size={14}/> Nueva orden</Link><Link className="btn btn-brand" href="/dashboard/nueva">Nueva constancia</Link></div></header>
+ return <>{demoClients>0&&<DemoOnboarding/>}<header className="page-head dashboard-head"><div><div className="eyebrow">CENTRO DE OPERACIONES</div><h1>{organization.name}</h1><p>Una vista rápida de trabajo, caja y próximos movimientos.</p></div><div className="dashboard-actions"><Link className="btn btn-light" href="/dashboard/ordenes"><ClipboardList size={14}/> Nueva orden</Link><Link className="btn btn-brand" href="/dashboard/nueva">Nueva constancia</Link></div></header>
  <section className="kpi-grid">
   <div className="kpi-card"><span><CircleDollarSign size={15}/> Facturado este mes</span><strong>{moneyCents(billed)}</strong><small>{collectionRate}% cobrado</small><div className="kpi-track"><i style={{width:collectionRate+"%"}}/></div></div>
   <div className="kpi-card"><span><CircleDollarSign size={15}/> Cobrado este mes</span><strong>{moneyCents(collected)}</strong><small>Saldo total {moneyCents(outstanding)}</small></div>
