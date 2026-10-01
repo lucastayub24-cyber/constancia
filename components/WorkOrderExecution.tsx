@@ -1,0 +1,27 @@
+"use client";
+import {useState} from "react";
+import {useRouter} from "next/navigation";
+
+type Stage="BEFORE"|"DURING"|"AFTER";
+type Photo={storageKey:string;stage:Stage};
+async function compress(file:File){
+  if(!["image/jpeg","image/png","image/webp"].includes(file.type))throw new Error("Usá JPG, PNG o WEBP.");
+  const bitmap=await createImageBitmap(file);let w=bitmap.width,h=bitmap.height;const ratio=Math.min(1,1400/Math.max(w,h));w=Math.round(w*ratio);h=Math.round(h*ratio);
+  const canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;const ctx=canvas.getContext("2d");if(!ctx)throw new Error("No se pudo procesar la foto.");
+  ctx.drawImage(bitmap,0,0,w,h);bitmap.close();return canvas.toDataURL("image/jpeg",.68);
+}
+function gps(){return new Promise<GeolocationPosition>((resolve,reject)=>{if(!navigator.geolocation)return reject(new Error("Este dispositivo no permite obtener ubicación."));navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:12000,maximumAge:30000})})}
+
+export function WorkOrderExecution({id,items,initialChecklist,initialPhotos,initialNotes,status,startedAt,completedAt}:{id:string;items:string[];initialChecklist:boolean[];initialPhotos:Photo[];initialNotes:string;status:string;startedAt:string|null;completedAt:string|null}){
+ const router=useRouter();const[checklist,setChecklist]=useState(items.map((_,i)=>Boolean(initialChecklist[i])));const[notes,setNotes]=useState(initialNotes||"");
+ const[photos,setPhotos]=useState<Record<Stage,string[]>>({BEFORE:initialPhotos.filter(x=>x.stage==="BEFORE").map(x=>x.storageKey),DURING:initialPhotos.filter(x=>x.stage==="DURING").map(x=>x.storageKey),AFTER:initialPhotos.filter(x=>x.stage==="AFTER").map(x=>x.storageKey)});
+ const[busy,setBusy]=useState("");const[error,setError]=useState("");
+ async function add(stage:Stage,files:FileList|null){if(!files)return;setBusy("Fotos");setError("");try{const room=8-photos[stage].length;const added=[];for(const f of Array.from(files).slice(0,room))added.push(await compress(f));setPhotos(p=>({...p,[stage]:[...p[stage],...added]}))}catch(e){setError(e instanceof Error?e.message:"No se pudo cargar la foto")}finally{setBusy("")}}
+ async function send(action:"SAVE"|"START"|"COMPLETE"){setBusy(action);setError("");try{let loc:{latitude?:number;longitude?:number;accuracy?:number}={};if(action!=="SAVE"){const p=await gps();loc={latitude:p.coords.latitude,longitude:p.coords.longitude,accuracy:p.coords.accuracy}}const res=await fetch("/api/work-orders/"+id+"/execution",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({action,checklist,notes,photos,...loc})});const j=await res.json();if(!res.ok)throw new Error(j.error||"No se pudo guardar");router.refresh()}catch(e){setError(e instanceof Error?e.message:"No se pudo guardar")}finally{setBusy("")}}
+ const stageLabel:Record<Stage,string>={BEFORE:"Antes",DURING:"Durante",AFTER:"Después"};
+ return <section className="panel" style={{marginTop:14}}><div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"center",flexWrap:"wrap"}}><div><h2 style={{marginBottom:4}}>Ejecución en campo</h2><div className="muted" style={{fontSize:11}}>{startedAt?"Inicio "+new Date(startedAt).toLocaleString("es-AR"):"Todavía no iniciado"}{completedAt?" · Fin "+new Date(completedAt).toLocaleString("es-AR"):""}</div></div>{!startedAt&&status!=="COMPLETED"?<button className="btn btn-brand" disabled={!!busy} onClick={()=>send("START")}>Iniciar con GPS</button>:status!=="COMPLETED"?<button className="btn btn-brand" disabled={!!busy} onClick={()=>send("COMPLETE")}>Finalizar con GPS</button>:<span className="pill paid">Trabajo finalizado</span>}</div>
+ {items.length>0&&<div style={{marginTop:18}}><b>Checklist obligatorio</b><div className="checklist" style={{marginTop:8}}>{items.map((x,i)=><label key={i} style={{display:"flex",gap:9,alignItems:"flex-start",padding:"8px 0"}}><input type="checkbox" checked={checklist[i]} disabled={status==="COMPLETED"} onChange={e=>setChecklist(v=>v.map((a,n)=>n===i?e.target.checked:a))}/><span>{x}</span></label>)}</div></div>}
+ <div className="form-grid" style={{marginTop:18}}>{(["BEFORE","DURING","AFTER"] as Stage[]).map(stage=><div className="field" key={stage}><b>Fotos · {stageLabel[stage]}</b><input className="input" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" multiple disabled={status==="COMPLETED"||photos[stage].length>=8||!!busy} onChange={e=>add(stage,e.target.files)}/><small className="muted">{photos[stage].length}/8 fotos</small>{photos[stage].length>0&&<div className="photo-grid" style={{marginTop:8}}>{photos[stage].map((src,i)=><div key={i} style={{position:"relative"}}><img src={src} alt={stageLabel[stage]+" "+(i+1)}/>{status!=="COMPLETED"&&<button type="button" className="btn btn-danger" style={{position:"absolute",right:4,top:4,padding:5}} onClick={()=>setPhotos(p=>({...p,[stage]:p[stage].filter((_,n)=>n!==i)}))}>×</button>}</div>)}</div>}</div>)}</div>
+ <label className="field" style={{marginTop:16}}>Notas de ejecución<textarea className="textarea" value={notes} disabled={status==="COMPLETED"} onChange={e=>setNotes(e.target.value)} placeholder="Detalle técnico, mediciones, observaciones..."/></label>
+ {error&&<div className="error">{error}</div>}{status!=="COMPLETED"&&<div className="actions"><button className="btn btn-light" disabled={!!busy} onClick={()=>send("SAVE")}>{busy?"Guardando...":"Guardar avance"}</button></div>}</section>
+}
