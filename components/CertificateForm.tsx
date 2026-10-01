@@ -33,7 +33,7 @@ export function CertificateForm({clients,assets=[],initialClientId,initialAssetI
       serviceTitle:f.get("serviceTitle"),description:f.get("description"),observations:f.get("observations"),
       technicianName:f.get("technicianName"),serviceAddress:f.get("serviceAddress"),performedAt:f.get("performedAt"),
       nextServiceAt:f.get("nextServiceAt"),warrantyUntil:f.get("warrantyUntil"),
-      signatureName:f.get("signatureName"),signatureDataUrl:signature,photoKeys:photos,
+      signatureName:f.get("signatureName"),signatureDocument:f.get("signatureDocument"),signatureDataUrl:signature,photoKeys:photos,
       totalAmount:f.get("totalAmount")||undefined,paymentDueDate:f.get("paymentDueDate"),
       initialPaymentAmount:f.get("initialPaymentAmount")||undefined,initialPaymentMethod:f.get("initialPaymentMethod")||undefined,
       paymentReference:f.get("paymentReference"),paymentNotes:f.get("paymentNotes")
@@ -76,8 +76,9 @@ export function CertificateForm({clients,assets=[],initialClientId,initialAssetI
     <section className="panel"><h2>Postventa y conformidad</h2><div className="form-grid">
       <label className="field">Próximo service<input className="input" name="nextServiceAt" type="date" defaultValue={initialNextServiceAt||""}/></label>
       <label className="field">Garantía del trabajo hasta<input className="input" name="warrantyUntil" type="date"/></label>
-      <label className="field">Recibido por<input className="input" name="signatureName"/></label>
-      <div className="full"><SignaturePad onChange={setSignature}/></div>
+      <label className="field">Recibido por<input className="input" name="signatureName" placeholder="Nombre y apellido"/></label>
+      <label className="field">DNI / documento<input className="input" name="signatureDocument" placeholder="Documento de quien firma"/></label>
+      <div className="full"><SignaturePad onChange={setSignature}/><small className="muted" style={{display:"block",marginTop:7}}>Al firmar se registra fecha, IP y dispositivo como evidencia técnica de conformidad.</small></div>
     </div></section>
     {error&&<div className="error">{error}</div>}
     <div className="actions">{queued&&<button className="btn btn-light" type="button" onClick={()=>location.reload()}>Crear otra</button>}<button className="btn btn-brand" disabled={busy||queued}>{busy?"Guardando...":queued?"Guardada offline":"Emitir constancia"}</button></div>
