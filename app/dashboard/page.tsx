@@ -1,6 +1,6 @@
 import Link from "next/link";
 import {ArrowUpRight,CalendarDays,CircleDollarSign,ClipboardList,FilePlus2,FileText,HelpCircle,PackageSearch,UserPlus,UsersRound,Wrench} from "lucide-react";
-import {db} from "@/lib/db";import {activeOrganization} from "@/lib/org";import {moneyCents} from "@/lib/utils";import {DemoOnboarding} from "@/components/DemoOnboarding";import {DEMO_MARKER} from "@/lib/demo-data";
+import {db} from "@/lib/db";import {activeOrganization} from "@/lib/org";import {moneyCents} from "@/lib/utils";import {DemoOnboarding} from "@/components/DemoOnboarding";import {DemoStarter} from "@/components/DemoStarter";import {DEMO_MARKER} from "@/lib/demo-data";
 
 const statusLabels:Record<string,string>={SCHEDULED:"Programada",EN_ROUTE:"En camino",IN_PROGRESS:"En curso",WAITING_PART:"Esperando repuesto",COMPLETED:"Completada",CANCELED:"Cancelada"};
 export default async function Dashboard(){
@@ -22,7 +22,7 @@ export default async function Dashboard(){
  const materialCost=monthCerts.reduce((sum,c)=>sum+(c.workOrder?.materials||[]).reduce((s,m)=>s+(m.unitCostCents?BigInt(Math.round(Number(m.quantity)*1000))*m.unitCostCents/1000n:0n),0n),0n);
  const margin=billed>materialCost?billed-materialCost:0n;const collectionRate=billed>0n?Math.min(100,Math.round(Number(collected*10000n/billed)/100)):0;
  const dueSoon=certs.filter(c=>c.nextServiceAt&&c.nextServiceAt>=now&&c.nextServiceAt<=next7).length;
- return <>{demoClients>0&&<DemoOnboarding/>}<header className="page-head dashboard-head"><div><div className="eyebrow">CENTRO DE OPERACIONES</div><h1>{organization.name}</h1><p>Una vista rápida de trabajo, caja y próximos movimientos.</p></div><div className="dashboard-actions"><Link className="btn btn-light" href="/dashboard/ordenes"><ClipboardList size={14}/> Nueva orden</Link><Link className="btn btn-brand" href="/dashboard/nueva">Nueva constancia</Link></div></header>
+ const showDemoStarter=demoClients===0&&clients===0&&assets===0&&orders.length===0&&certs.length===0;\n return <>{demoClients>0&&<DemoOnboarding/>}{showDemoStarter&&<DemoStarter/>}<header className="page-head dashboard-head"><div><div className="eyebrow">CENTRO DE OPERACIONES</div><h1>{organization.name}</h1><p>Una vista rápida de trabajo, caja y próximos movimientos.</p></div><div className="dashboard-actions"><Link className="btn btn-light" href="/dashboard/ordenes"><ClipboardList size={14}/> Nueva orden</Link><Link className="btn btn-brand" href="/dashboard/nueva">Nueva constancia</Link></div></header>
  <section className="quick-action-dock"><div><span>ACCIONES RÁPIDAS</span><b>Empezá donde estás.</b></div><Link href="/dashboard/clientes"><UserPlus size={15}/>Cliente</Link><Link href="/dashboard/activos"><PackageSearch size={15}/>Activo</Link><Link href="/dashboard/presupuestos"><FileText size={15}/>Presupuesto</Link><Link href="/dashboard/ordenes"><ClipboardList size={15}/>Orden</Link><Link href="/dashboard/nueva"><FilePlus2 size={15}/>Constancia</Link><Link href="/dashboard/guia" className="quick-help"><HelpCircle size={15}/>Guía</Link></section>
  <section className="kpi-grid">
   <div className="kpi-card"><span><CircleDollarSign size={15}/> Facturado este mes</span><strong>{moneyCents(billed)}</strong><small>{collectionRate}% cobrado</small><div className="kpi-track"><i style={{width:collectionRate+"%"}}/></div></div>
