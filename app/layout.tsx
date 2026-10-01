@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     default: "Constancia — Trabajos documentados",
     template: "%s | Constancia",
   },
-  description: "Generá constancias profesionales de servicio con fotos, firma, QR verificable, cobros e historial.",
+  description: "Gestioná clientes, equipos, presupuestos, órdenes, técnicos, evidencia, constancias, cobros y próximos services en un solo sistema.",
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
   openGraph: {
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     url: "/",
     siteName: "Constancia",
     title: "Constancia — Hiciste el trabajo. Dejá constancia.",
-    description: "Constancias profesionales con fotos, firma, QR verificable, cobros e historial.",
+    description: "Clientes, activos, órdenes, técnicos, evidencia, constancias verificables, cobros y próximos services en un solo sistema.",
   },
   manifest: "/manifest.webmanifest",
   icons: {
