@@ -1,6 +1,7 @@
 import {db} from "@/lib/db";
 import {getAuthorizedPayment,getPayment,getSubscription,validMpSignature} from "@/lib/mercadopago";
 import {PLAN_INFO} from "@/lib/plans";
+import {getSellerPayment} from "@/lib/mp-seller";
 import type {Plan} from "@prisma/client";
 
 const paidAt=(value?:string|null)=>value?new Date(value):new Date();
@@ -20,9 +21,16 @@ export async function POST(request:Request){
    const x=await getAuthorizedPayment(dataId);const org=await db.organization.findFirst({where:{mpSubscriptionId:x.preapproval_id}});
    if(org){const providerId=String(x.payment?.id??x.id);const status=String(x.payment?.status??x.summarized??x.status);await db.subscriptionPayment.upsert({where:{providerPaymentId:providerId},create:{organizationId:org.id,providerPaymentId:providerId,amountCents:BigInt(Math.round(Number(x.transaction_amount)*100)),currency:x.currency_id||"ARS",status,paidAt:status==="approved"?paidAt(x.debit_date):null,raw:x},update:{status,paidAt:status==="approved"?paidAt(x.debit_date):null,raw:x}});if(status==="approved")await db.organization.update({where:{id:org.id},data:{subscriptionStatus:"ACTIVE",monthlyCertificateLimit:PLAN_INFO[org.plan].certificateLimit}})}
   }else if(type==="payment"){
-   const x=await getPayment(dataId);const ref=typeof x.external_reference==="string"?x.external_reference:"";const parts=ref.startsWith("constancia:")?ref.split(":"):null;
-   if(parts?.[1]==="service"){
-    const orgId=parts[2],certificateId=parts[3];const cert=orgId&&certificateId?await db.certificate.findFirst({where:{id:certificateId,organizationId:orgId,status:"ISSUED"}}):null;
+   const sellerOrgId=u.searchParams.get("seller_org");
+   const x=sellerOrgId?await getSellerPayment(sellerOrgId,dataId):await getPayment(dataId);
+   const ref=typeof x.external_reference==="string"?x.external_reference:"";
+   const sellerMatch=/^constancia_service_([^_]+)_([^_]+)$/.exec(ref);
+   const parts=ref.startsWith("constancia:")?ref.split(":"):null;
+   const serviceOrgId=sellerMatch?.[1]||(parts?.[1]==="service"?parts[2]:null);
+   const serviceCertificateId=sellerMatch?.[2]||(parts?.[1]==="service"?parts[3]:null);
+   if(serviceOrgId&&serviceCertificateId){
+    if(sellerOrgId&&sellerOrgId!==serviceOrgId)return new Response("seller mismatch",{status:400});
+    const orgId=serviceOrgId,certificateId=serviceCertificateId;const cert=await db.certificate.findFirst({where:{id:certificateId,organizationId:orgId,status:"ISSUED"}});
     if(cert&&String(x.status)==="approved"){
      const reference="MP "+String(x.id);const exists=await db.certificatePayment.findFirst({where:{certificateId:cert.id,reference}});
      if(!exists)await db.certificatePayment.create({data:{certificateId:cert.id,amountCents:BigInt(Math.round(Number(x.transaction_amount||0)*100)),method:"MERCADO_PAGO",paidAt:paidAt(x.date_approved),reference,notes:"Pago acreditado automáticamente por Mercado Pago."}});
