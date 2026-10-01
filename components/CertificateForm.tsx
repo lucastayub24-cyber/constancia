@@ -53,7 +53,7 @@ export function CertificateForm({clients,assets=[],initialClientId,initialAssetI
 
   return <form className="form" onSubmit={submit}>
     {queued&&<div className="success"><b>Constancia guardada sin conexión.</b><br/>Se enviará automáticamente cuando vuelva internet. No cierres sesión antes de que se sincronice.</div>}
-    {initialWorkOrderId&&<div className="success"><b>Cierre de orden de trabajo.</b> Al emitir esta constancia, la orden quedará completada automáticamente.</div>}
+    {initialWorkOrderId&&<div className="success"><b>Orden de trabajo finalizada.</b> Esta constancia documentará el cierre ya validado con checklist, GPS y evidencia de campo.</div>}
     <section className="panel"><h2>Cliente, activo y trabajo</h2><div className="form-grid">
       <label className="field">Cliente<select className="select" name="clientId" required defaultValue={initialClientId||""} onChange={e=>setSelectedClient(e.target.value)}><option value="" disabled>Seleccionar</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
       <label className="field">Equipo / activo<select className="select" name="assetId" defaultValue={initialAssetId||""}><option value="">Sin activo específico</option>{filteredAssets.map(a=><option key={a.id} value={a.id}>A-{String(a.assetNumber).padStart(5,"0")} · {a.name}</option>)}</select></label>
