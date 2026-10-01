@@ -7,6 +7,7 @@ export async function PATCH(request:Request,{params}:{params:Promise<{id:string}
   try{
     const{id}=await params;const{organization}=await activeOrganization();const body=await request.json();const status=String(body.status||"");
     if(!allowed.includes(status as typeof allowed[number]))return NextResponse.json({error:"Estado inválido"},{status:400});
+    if(status==="COMPLETED")return NextResponse.json({error:"Finalizá la orden desde Ejecución en campo para validar checklist, GPS y evidencia."},{status:400});
     const current=await db.workOrder.findFirst({where:{id,organizationId:organization.id}});if(!current)return NextResponse.json({error:"No encontrada"},{status:404});
     const data:{status:typeof allowed[number];startedAt?:Date;completedAt?:Date}={status:status as typeof allowed[number]};
     if(status==="IN_PROGRESS"&&!current.startedAt)data.startedAt=new Date();
