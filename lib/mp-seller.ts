@@ -101,7 +101,9 @@ export async function getSellerAccessToken(organizationId:string){
   const expiresSoon=!org.mpSellerTokenExpiresAt||org.mpSellerTokenExpiresAt.getTime()<Date.now()+48*60*60*1000;
   if(!expiresSoon)return decryptSecret(org.mpSellerAccessTokenEnc);
   if(!org.mpSellerRefreshTokenEnc)throw new Error("La conexión de Mercado Pago venció. El profesional debe volver a conectarla.");
-  const refreshed=await refreshSeller(decryptSecret(org.mpSellerRefreshTokenEnc));
+  const currentRefresh=decryptSecret(org.mpSellerRefreshTokenEnc);
+  const refreshed=await refreshSeller(currentRefresh);
+  if(!refreshed.refresh_token)refreshed.refresh_token=currentRefresh;
   await saveSellerConnection(organizationId,refreshed);
   return refreshed.access_token;
 }
