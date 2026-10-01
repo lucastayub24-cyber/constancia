@@ -3,6 +3,14 @@ import type {Prisma} from "@prisma/client";
 
 export const DEMO_MARKER="[CONSTANCIA_DEMO]";
 
+function demoPhoto(label:string,variant:"before"|"during"|"after"){
+  const bg=variant==="before"?"#d7d2c8":variant==="during"?"#cfd9d2":"#dce8df";
+  const accent=variant==="before"?"#8a725f":variant==="during"?"#3f7658":"#247a50";
+  const note=variant==="before"?"Estado inicial":variant==="during"?"Trabajo en proceso":"Equipo finalizado";
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800"><rect width="1200" height="800" fill="${bg}"/><rect x="90" y="110" width="1020" height="570" rx="28" fill="#eef0eb"/><rect x="165" y="260" width="570" height="265" rx="24" fill="#5e6a61"/><rect x="205" y="305" width="355" height="175" rx="16" fill="#87958a"/><circle cx="655" cy="455" r="86" fill="#3c4940"/><circle cx="655" cy="455" r="48" fill="#b7c1b8"/><rect x="760" y="210" width="210" height="315" rx="22" fill="${accent}"/><rect x="805" y="260" width="120" height="74" rx="10" fill="#e9eee9"/><path d="M250 570h690" stroke="#aab2aa" stroke-width="18" stroke-linecap="round"/><circle cx="255" cy="178" r="10" fill="${accent}"/><text x="282" y="188" fill="#263129" font-family="Arial,sans-serif" font-size="32" font-weight="700">${label}</text><text x="165" y="635" fill="#667068" font-family="Arial,sans-serif" font-size="25">${note} · Evidencia demo de Constancia</text></svg>`;
+  return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
+}
+
 export async function createDemoWorkspace(tx:Prisma.TransactionClient,input:{organizationId:string;userId:string}){
   const now=new Date();
   const nextService=new Date(now);nextService.setDate(nextService.getDate()+28);
@@ -70,6 +78,14 @@ export async function createDemoWorkspace(tx:Prisma.TransactionClient,input:{org
     startLatitude:-34.6037,startLongitude:-58.3816,endLatitude:-34.6037,endLongitude:-58.3816,
     startAccuracyMeters:8,endAccuracyMeters:7,startedUserAgent:"Constancia Demo",completedUserAgent:"Constancia Demo",
     executionNotes:"Equipo en buen estado general. Se reemplazó filtro y la prueba operativa quedó OK.",
+    photos:{create:[
+      {stage:"BEFORE",sortOrder:0,storageKey:demoPhoto("ANTES · Vista general","before")},
+      {stage:"BEFORE",sortOrder:1,storageKey:demoPhoto("ANTES · Filtro","before")},
+      {stage:"DURING",sortOrder:0,storageKey:demoPhoto("DURANTE · Desarme","during")},
+      {stage:"DURING",sortOrder:1,storageKey:demoPhoto("DURANTE · Reemplazo","during")},
+      {stage:"AFTER",sortOrder:0,storageKey:demoPhoto("DESPUÉS · Equipo limpio","after")},
+      {stage:"AFTER",sortOrder:1,storageKey:demoPhoto("DESPUÉS · Prueba OK","after")},
+    ]},
     materials:{create:[{name:"Filtro de admisión",quantity:1,unit:"u",unitCostCents:2100000n}]}
   }});
 
@@ -83,6 +99,11 @@ export async function createDemoWorkspace(tx:Prisma.TransactionClient,input:{org
     signatureName:"Juan Pérez · Demo",signatureDocument:"00.000.000",signatureIp:"127.0.0.1",
     signatureUserAgent:"Constancia Demo",customerAcceptedAt:completed,totalAmountCents:18500000n,currency:"ARS",
     paymentStatus:"PARTIAL",paymentDueDate:nextVisit,paymentNotes:DEMO_MARKER+" Cobro de ejemplo.",
+    photos:{create:[
+      {sortOrder:0,label:"Antes",storageKey:demoPhoto("ANTES · Equipo","before")},
+      {sortOrder:1,label:"Durante",storageKey:demoPhoto("DURANTE · Service","during")},
+      {sortOrder:2,label:"Después",storageKey:demoPhoto("DESPUÉS · Final","after")},
+    ]},
   }});
 
   await tx.certificatePayment.create({data:{
