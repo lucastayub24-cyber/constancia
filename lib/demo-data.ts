@@ -12,7 +12,18 @@ export async function createDemoWorkspace(tx:Prisma.TransactionClient,input:{org
   const started=new Date(now.getTime()-105*60*1000);
   const completed=new Date(now.getTime()-25*60*1000);
 
-  const [lastAsset,lastQuote,lastOrder,lastCertificate]=await Promise.all([\n    tx.asset.findFirst({where:{organizationId:input.organizationId},orderBy:{assetNumber:"desc"},select:{assetNumber:true}}),\n    tx.quote.findFirst({where:{organizationId:input.organizationId},orderBy:{sequentialNumber:"desc"},select:{sequentialNumber:true}}),\n    tx.workOrder.findFirst({where:{organizationId:input.organizationId},orderBy:{sequentialNumber:"desc"},select:{sequentialNumber:true}}),\n    tx.certificate.findFirst({where:{organizationId:input.organizationId},orderBy:{sequentialNumber:"desc"},select:{sequentialNumber:true}}),\n  ]);\n  const assetNumber=(lastAsset?.assetNumber??0)+1;\n  const quoteNumber=(lastQuote?.sequentialNumber??0)+1;\n  const orderNumber=(lastOrder?.sequentialNumber??0)+1;\n  const certificateNumber=(lastCertificate?.sequentialNumber??0)+1;\n\n  const client=await tx.client.create({data:{
+  const [lastAsset,lastQuote,lastOrder,lastCertificate]=await Promise.all([
+    tx.asset.findFirst({where:{organizationId:input.organizationId},orderBy:{assetNumber:"desc"},select:{assetNumber:true}}),
+    tx.quote.findFirst({where:{organizationId:input.organizationId},orderBy:{sequentialNumber:"desc"},select:{sequentialNumber:true}}),
+    tx.workOrder.findFirst({where:{organizationId:input.organizationId},orderBy:{sequentialNumber:"desc"},select:{sequentialNumber:true}}),
+    tx.certificate.findFirst({where:{organizationId:input.organizationId},orderBy:{sequentialNumber:"desc"},select:{sequentialNumber:true}}),
+  ]);
+  const assetNumber=(lastAsset?.assetNumber??0)+1;
+  const quoteNumber=(lastQuote?.sequentialNumber??0)+1;
+  const orderNumber=(lastOrder?.sequentialNumber??0)+1;
+  const certificateNumber=(lastCertificate?.sequentialNumber??0)+1;
+
+  const client=await tx.client.create({data:{
     organizationId:input.organizationId,
     name:"Metalúrgica Norte · Ejemplo",
     email:"compras@metalurgicanorte.demo",
