@@ -6,6 +6,7 @@ import {registerSchema} from "@/lib/validation";
 import {slugify} from "@/lib/utils";
 import {randomUUID} from "crypto";
 import {consumeRateLimit,RateLimitError} from "@/lib/rate-limit";
+import {createDemoWorkspace} from "@/lib/demo-data";
 
 export async function POST(request:Request){
   try{
@@ -21,6 +22,7 @@ export async function POST(request:Request){
       const org=await tx.organization.create({data:{name:input.organizationName,email,publicSlug:slug}});
       await tx.membership.create({data:{organizationId:org.id,userId:created.id,role:"OWNER"}});
       await tx.user.update({where:{id:created.id},data:{activeOrganizationId:org.id}});
+      await createDemoWorkspace(tx,{organizationId:org.id,userId:created.id});
       return created;
     });
     await createSession(user.id);
