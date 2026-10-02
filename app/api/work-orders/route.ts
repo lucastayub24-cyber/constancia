@@ -2,6 +2,7 @@ import {NextResponse} from "next/server";
 import {db} from "@/lib/db";
 import {activeOrganization} from "@/lib/org";
 import {workOrderSchema} from "@/lib/validation";
+import {sendPushToOrganization,sendPushToUser} from "@/lib/push";
 
 export async function GET(){
   try{const{organization}=await activeOrganization();const workOrders=await db.workOrder.findMany({where:{organizationId:organization.id},include:{client:true,asset:true,assignedUser:true,certificate:true},orderBy:[{scheduledStart:"asc"},{createdAt:"desc"}],take:300});return NextResponse.json({workOrders})}
@@ -23,6 +24,13 @@ export async function POST(request:Request){
       scheduledStart:input.scheduledStart?new Date(input.scheduledStart):null,scheduledEnd:input.scheduledEnd?new Date(input.scheduledEnd):null,
       internalNotes:input.internalNotes||null
     }});
+    if(workOrder.scheduledStart){
+      const when=workOrder.scheduledStart.toLocaleString("es-AR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit",timeZone:"America/Argentina/Buenos_Aires"});
+      await db.notification.create({data:{organizationId:organization.id,userId:workOrder.assignedUserId||null,type:"WORK_ORDER",title:"Trabajo agendado",body:"OT-"+String(workOrder.sequentialNumber).padStart(5,"0")+" · "+workOrder.title+" · "+when,href:"/dashboard/orden/"+workOrder.id}}).catch(()=>undefined);
+      const payload={title:"Trabajo agendado",body:client.name+" · "+workOrder.title+" · "+when,href:"/dashboard/orden/"+workOrder.id,tag:"work-order-"+workOrder.id};
+      if(workOrder.assignedUserId)await sendPushToUser(workOrder.assignedUserId,payload).catch(()=>undefined);
+      else await sendPushToOrganization(organization.id,payload).catch(()=>undefined);
+    }
     return NextResponse.json({workOrder});
   }catch(error){return NextResponse.json({error:error instanceof Error?error.message:"No se pudo crear la orden"},{status:400})}
 }
