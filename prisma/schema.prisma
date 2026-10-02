@@ -136,6 +136,7 @@ model User {
   notifications        Notification[]
   supportThreads       SupportThread[]
   supportMessages      SupportMessage[]
+  pushSubscriptions    PushSubscription[]
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
   @@index([activeOrganizationId])
@@ -193,6 +194,7 @@ model Organization {
   maintenanceContracts    MaintenanceContract[]
   notifications           Notification[]
   supportThreads          SupportThread[]
+  pushSubscriptions       PushSubscription[]
 }
 
 model Membership {
@@ -586,4 +588,22 @@ model SupportMessage {
   readAt      DateTime?
   createdAt   DateTime      @default(now())
   @@index([threadId,createdAt])
+}
+
+
+model PushSubscription {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields:[userId],references:[id],onDelete:Cascade)
+  organizationId String
+  organization   Organization @relation(fields:[organizationId],references:[id],onDelete:Cascade)
+  endpoint       String       @unique @db.Text
+  p256dh         String       @db.Text
+  auth           String       @db.Text
+  userAgent      String?      @db.Text
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([organizationId])
 }
