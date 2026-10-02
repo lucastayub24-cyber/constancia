@@ -2,6 +2,7 @@ import {NextResponse} from "next/server";
 import {db} from "@/lib/db";
 import {currentUser} from "@/lib/auth";
 import {consumeRateLimit,RateLimitError} from "@/lib/rate-limit";
+import {sendPushToAdmins} from "@/lib/push";
 
 const clean=(v:unknown,max=2000)=>String(v??"").trim().slice(0,max);
 
@@ -36,6 +37,7 @@ export async function POST(request:Request){
     }});
     const created=await db.supportMessage.create({data:{threadId:thread.id,sender:"USER",senderUserId:user.id,body:message}});
     await db.supportThread.update({where:{id:thread.id},data:{lastMessageAt:created.createdAt,status:"OPEN"}});
+    await sendPushToAdmins({title:"Nueva consulta de soporte",body:user.name+": "+message.slice(0,120),href:"/admin/soporte",tag:"support-"+thread.id}).catch(()=>undefined);
     return NextResponse.json({ok:true,threadId:thread.id});
   }
 
@@ -45,6 +47,7 @@ export async function POST(request:Request){
   await consumeRateLimit(request,"support-public",email,8,60*60*1000);
   const thread=await db.supportThread.create({data:{name,email,subject:clean(body.subject,120)||"Consulta desde la web",status:"OPEN"}});
   await db.supportMessage.create({data:{threadId:thread.id,sender:"USER",body:message}});
+  await sendPushToAdmins({title:"Nueva consulta desde la web",body:(name||email)+": "+message.slice(0,120),href:"/admin/soporte",tag:"support-"+thread.id}).catch(()=>undefined);
   return NextResponse.json({ok:true});
  }catch(error){
   if(error instanceof RateLimitError)return NextResponse.json({error:error.message},{status:429});
