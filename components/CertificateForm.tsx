@@ -1,5 +1,5 @@
 "use client";
-import {useMemo,useState} from "react";
+import {useMemo,useRef,useState} from "react";
 import {useRouter} from "next/navigation";
 import {ArrowLeft,ArrowRight,Camera,Check,CircleDollarSign,FileCheck2,PenLine} from "lucide-react";
 import {PhotoUploader} from "@/components/PhotoUploader";
@@ -11,8 +11,15 @@ const today=()=>new Date().toISOString().slice(0,10);
 const steps=[["Trabajo",FileCheck2],["Fotos",Camera],["Cobro",CircleDollarSign],["Cierre",PenLine]] as const;
 
 export function CertificateForm({clients,assets=[],initialClientId,initialAssetId,initialWorkOrderId,initialTitle,initialDescription,initialAddress,initialNextServiceAt}:{clients:Client[];assets?:Asset[];initialClientId?:string;initialAssetId?:string;initialWorkOrderId?:string;initialTitle?:string;initialDescription?:string;initialAddress?:string;initialNextServiceAt?:string}){
- const r=useRouter();const[error,setError]=useState("");const[busy,setBusy]=useState(false);const[photos,setPhotos]=useState<string[]>([]);const[signature,setSignature]=useState("");const[queued,setQueued]=useState(false);const[selectedClient,setSelectedClient]=useState(initialClientId||"");const[step,setStep]=useState(0);
+ const r=useRouter();const formRef=useRef<HTMLFormElement|null>(null);const[error,setError]=useState("");const[busy,setBusy]=useState(false);const[photos,setPhotos]=useState<string[]>([]);const[signature,setSignature]=useState("");const[queued,setQueued]=useState(false);const[selectedClient,setSelectedClient]=useState(initialClientId||"");const[step,setStep]=useState(0);
  const filteredAssets=useMemo(()=>assets.filter(a=>!selectedClient||a.clientId===selectedClient),[assets,selectedClient]);
+ function nextStep(){
+  const current=formRef.current?.querySelector(".wizard-panel.show");
+  const required=current?Array.from(current.querySelectorAll<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>("[required]")):[];
+  const invalid=required.find(el=>!el.checkValidity());
+  if(invalid){invalid.reportValidity();invalid.focus();return}
+  setStep(v=>Math.min(3,v+1));
+ }
  async function saveOffline(body:unknown){await queueCertificate(body);setQueued(true);setError("")}
  async function submit(e:React.FormEvent<HTMLFormElement>){
   e.preventDefault();setBusy(true);setError("");const f=new FormData(e.currentTarget);const body={clientId:f.get("clientId"),assetId:f.get("assetId")||undefined,workOrderId:initialWorkOrderId||undefined,serviceTitle:f.get("serviceTitle"),description:f.get("description"),observations:f.get("observations"),technicianName:f.get("technicianName"),serviceAddress:f.get("serviceAddress"),performedAt:f.get("performedAt"),nextServiceAt:f.get("nextServiceAt"),warrantyUntil:f.get("warrantyUntil"),signatureName:f.get("signatureName"),signatureDocument:f.get("signatureDocument"),signatureDataUrl:signature,photoKeys:photos,totalAmount:f.get("totalAmount")||undefined,paymentDueDate:f.get("paymentDueDate"),initialPaymentAmount:f.get("initialPaymentAmount")||undefined,initialPaymentMethod:f.get("initialPaymentMethod")||undefined,paymentReference:f.get("paymentReference"),paymentNotes:f.get("paymentNotes")};
@@ -20,10 +27,10 @@ export function CertificateForm({clients,assets=[],initialClientId,initialAssetI
   try{const res=await fetch("/api/certificates",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const j=await res.json().catch(()=>({}));if(!res.ok)throw new Error(j.error||"No se pudo emitir la constancia");r.push("/dashboard/constancia/"+j.id);r.refresh()}catch(err){if(!navigator.onLine||err instanceof TypeError){try{await saveOffline(body)}catch{setError("Se perdió la conexión y no pudimos guardarla localmente.")}}else setError(err instanceof Error?err.message:"No se pudo emitir")}finally{setBusy(false)}
  }
  if(clients.length===0)return <div className="prerequisite-card"><div className="empty-icon"><FileCheck2 size={23}/></div><div><span className="eyebrow">PRIMERO UN CLIENTE</span><h2>Necesitamos saber para quién fue el trabajo.</h2><p>Creá el cliente y después volvés a emitir la constancia.</p></div><a className="btn btn-brand" href="/dashboard/clientes#nuevo">Crear cliente</a></div>;
- return <form className="form certificate-wizard" onSubmit={submit}>
+ return <form ref={formRef} className="form certificate-wizard" onSubmit={submit}>
   {queued&&<div className="success"><b>Guardada sin conexión.</b> Se enviará sola cuando vuelva internet.</div>}
   {initialWorkOrderId&&<div className="wizard-context"><Check size={15}/><div><b>Trabajo terminado.</b><span>Ahora solo falta dejarlo documentado.</span></div></div>}
-  <div className="wizard-steps">{steps.map(([label,Icon],i)=><button type="button" key={label} className={(i===step?"active ":"")+(i<step?"done":"")} onClick={()=>setStep(i)}><i>{i<step?<Check size={12}/>:<Icon size={14}/>}</i><span><small>PASO {i+1}</small><b>{label}</b></span></button>)}</div>
+  <div className="wizard-steps">{steps.map(([label,Icon],i)=><button type="button" key={label} className={(i===step?"active ":"")+(i<step?"done":"")} onClick={()=>{if(i<=step)setStep(i)}}><i>{i<step?<Check size={12}/>:<Icon size={14}/>}</i><span><small>PASO {i+1}</small><b>{label}</b></span></button>)}</div>
 
   <section className={"panel wizard-panel "+(step===0?"show":"")} aria-hidden={step!==0}><div className="wizard-panel-head"><span>PASO 1 DE 4</span><h2>¿Qué trabajo hiciste?</h2><p>Estos son los únicos datos necesarios para emitir.</p></div><div className="form-grid">
    <label className="field">Cliente<select className="select" name="clientId" required defaultValue={initialClientId||""} onChange={e=>setSelectedClient(e.target.value)}><option value="" disabled>Elegí un cliente</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
@@ -56,6 +63,6 @@ export function CertificateForm({clients,assets=[],initialClientId,initialAssetI
   </div></section>
 
   {error&&<div className="error">{error}</div>}
-  <div className="wizard-actions"><button type="button" className="btn btn-light" disabled={step===0} onClick={()=>setStep(v=>Math.max(0,v-1))}><ArrowLeft size={14}/>Atrás</button><div className="wizard-action-copy">{step<3&&<span>Podés volver y cambiar cualquier dato.</span>}</div>{step<3?<button type="button" className="btn btn-brand" onClick={()=>setStep(v=>Math.min(3,v+1))}>Continuar <ArrowRight size={14}/></button>:<button className="btn btn-brand" disabled={busy||queued}>{busy?"Guardando...":queued?"Guardada offline":<><Check size={14}/>Emitir constancia</>}</button>}</div>
+  <div className="wizard-actions"><button type="button" className="btn btn-light" disabled={step===0} onClick={()=>setStep(v=>Math.max(0,v-1))}><ArrowLeft size={14}/>Atrás</button><div className="wizard-action-copy">{step<3&&<span>Podés volver y cambiar cualquier dato.</span>}</div>{step<3?<button type="button" className="btn btn-brand" onClick={nextStep}>Continuar <ArrowRight size={14}/></button>:<button className="btn btn-brand" disabled={busy||queued}>{busy?"Guardando...":queued?"Guardada offline":<><Check size={14}/>Emitir constancia</>}</button>}</div>
  </form>
 }
