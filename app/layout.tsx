@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import {SupportWidget} from "@/components/SupportWidget";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://constancia-nu.vercel.app"),
@@ -40,5 +41,5 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="es"><body>{children}</body></html>;
+  return <html lang="es"><body>{children}<SupportWidget/></body></html>;
 }
