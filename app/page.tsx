@@ -42,10 +42,42 @@ const faqs=[
 ];
 
 export default function Home(){return <><a className="skip-link" href="#contenido">Saltar al contenido</a><PublicNav/><main id="contenido">
-<section className="container hero hero-v3"><div className="hero-copy"><div className="eyebrow">EL SISTEMA OPERATIVO PARA EMPRESAS DE SERVICIOS</div><h1>Trabajá. Documentá. Cobrá. Volvé a vender.</h1><p className="lead">Constancia ordena clientes, trabajos, fotos, constancias y cobros sin obligarte a aprender un sistema complicado. Elegís qué querés hacer y te guía paso a paso.</p><div className="hero-actions hero-actions-v3"><Link href="/registro" className="btn btn-brand">Probar gratis <ArrowRight size={15}/></Link><Link href="/login" className="btn btn-light"><LogIn size={14}/> Ingresar</Link><Link href="/#guia" className="hero-tour-link">Ver cómo funciona <ArrowRight size={13}/></Link></div><div className="hero-proof"><span><Check size={14}/> Sin tarjeta</span><span><Check size={14}/> Cuenta con ejemplos</span><span><Smartphone size={14}/> Instalable</span><span><QrCode size={14}/> QR verificable</span></div></div>
-<div className="product-window product-window-v3"><div className="window-top"><span/><span/><span/><b>Constancia · Centro de operaciones</b></div><div className="mini-stats"><div><small>ÓRDENES ABIERTAS</small><strong>12</strong></div><div><small>HOY</small><strong>5</strong></div><div><small>COBRADO</small><strong>$1.24M</strong></div></div><div className="job-preview"><div className="job-head"><div><small>OT-00142</small><b>Mantenimiento preventivo</b></div><span className="pill wo-in_progress">EN CURSO</span></div><div className="job-meta"><span><UsersRound size={13}/> Metalúrgica Norte</span><span><Wrench size={13}/> Compresor Atlas</span><span><MapPin size={13}/> GPS registrado</span></div><div className="progress-label"><span>Checklist de ejecución</span><b>4/5</b></div><div className="progress-track"><i/></div><div className="evidence"><div><Camera size={17}/><span>ANTES</span><b>3 fotos</b></div><div><Camera size={17}/><span>DURANTE</span><b>4 fotos</b></div><div><Camera size={17}/><span>DESPUÉS</span><b>2 fotos</b></div></div></div><div className="window-foot"><span>Cliente → Equipo → OT → Evidencia → Constancia → Cobro</span><span className="live-dot">Sincronizado</span></div></div></section>
+<section className="hero-v4-shell"><div className="container hero hero-v4">
+ <div className="hero-copy hero-copy-v4">
+  <div className="hero-kicker-v4"><span>CONSTANCIA 3.0</span><i/> Gestión simple para empresas de servicios</div>
+  <h1>Todo tu trabajo.<br/><em>En un solo lugar.</em></h1>
+  <p className="lead">Clientes, trabajos, fotos, constancias, cobros y próximos services conectados de punta a punta. Sin planillas eternas, sin perder información y sin tener que aprender un sistema complicado.</p>
+  <div className="hero-actions hero-actions-v4"><Link href="/registro" className="btn btn-brand hero-primary-v4">Probar gratis <ArrowRight size={15}/></Link><Link href="/login" className="btn hero-login-v4"><LogIn size={14}/> Ingresar</Link><Link href="/#como-funciona" className="hero-tour-link-v4">Ver cómo funciona <ArrowRight size={13}/></Link></div>
+  <div className="hero-proof hero-proof-v4"><span><Check size={13}/> Sin tarjeta</span><span><Check size={13}/> Demo lista al entrar</span><span><Smartphone size={13}/> Funciona como app</span><span><QrCode size={13}/> QR verificable</span></div>
+ </div>
 
-<div className="container trust trust-v3"><div><b>Una sola operación.</b><span>Service técnico · climatización · mantenimiento industrial · talleres · instalaciones · agro · limpieza técnica · trabajo en campo.</span></div><Link href="/registro">Crear cuenta gratis <ArrowRight size={12}/></Link></div>
+ <div className="hero-stage-v4">
+  <div className="hero-glow-v4"/>
+  <div className="hero-float-card hero-float-top"><span>HOY</span><b>5 trabajos</b><small>2 ya terminados</small></div>
+  <div className="product-window product-window-v4">
+   <div className="window-top"><span/><span/><span/><b>Constancia · Inicio</b><em>En línea</em></div>
+   <div className="mini-stats mini-stats-v4"><div><small>TRABAJOS ABIERTOS</small><strong>12</strong><span>Todo bajo control</span></div><div><small>HOY</small><strong>5</strong><span>Agenda del día</span></div><div><small>COBRADO</small><strong>$1.24M</strong><span>Este mes</span></div></div>
+   <div className="job-preview job-preview-v4">
+    <div className="job-head"><div><small>OT-00142 · EN CURSO</small><b>Mantenimiento preventivo</b></div><span className="pill wo-in_progress">TRABAJANDO</span></div>
+    <div className="job-meta"><span><UsersRound size={13}/> Metalúrgica Norte</span><span><Wrench size={13}/> Compresor Atlas</span><span><MapPin size={13}/> Ubicación registrada</span></div>
+    <div className="progress-label"><span>Trabajo documentado</span><b>80%</b></div><div className="progress-track"><i/></div>
+    <div className="evidence evidence-v4"><div><Camera size={17}/><span>ANTES</span><b>3 fotos</b></div><div><Camera size={17}/><span>DURANTE</span><b>4 fotos</b></div><div><Camera size={17}/><span>DESPUÉS</span><b>2 fotos</b></div></div>
+   </div>
+   <div className="window-foot window-foot-v4"><span>Cliente → Trabajo → Evidencia → Constancia → Cobro</span><span className="live-dot">Sincronizado</span></div>
+  </div>
+  <div className="hero-float-card hero-float-payment"><ReceiptText size={16}/><div><span>PAGO ACREDITADO</span><b>$95.000</b><small>Saldo actualizado automáticamente</small></div></div>
+  <div className="hero-float-card hero-float-service"><RefreshCcw size={16}/><div><span>PRÓXIMO SERVICE</span><b>18 NOV</b><small>Recordatorio programado</small></div></div>
+ </div>
+</div></section>
+
+<section className="public-value-strip-v4"><div className="container">
+ <div><FileCheck2 size={18}/><span>Terminás el trabajo</span><b>Queda documentado</b></div>
+ <div><ReceiptText size={18}/><span>El cliente paga</span><b>El saldo se actualiza</b></div>
+ <div><RefreshCcw size={18}/><span>Definís próximo service</span><b>Constancia te lo recuerda</b></div>
+ <div><Smartphone size={18}/><span>Desde el celular</span><b>Como una app</b></div>
+</div></section>
+
+<div className="container trust trust-v4"><div><b>Hecho para trabajo real.</b><span>Service técnico · climatización · mantenimiento industrial · talleres · instalaciones · agro · limpieza técnica · trabajo en campo.</span></div><Link href="/registro">Crear cuenta gratis <ArrowRight size={12}/></Link></div>
 
 <section id="como-funciona" className="section section-white"><div className="container"><div className="section-intro"><div><div className="eyebrow">DEL PRIMER CONTACTO AL PRÓXIMO SERVICE</div><h2>Todo conectado.</h2></div><p>Lo que antes vivía separado entre WhatsApp, planillas, PDFs, fotos y memoria del equipo, ahora sigue un mismo recorrido.</p></div><div className="flow">{flow.map((x,i)=><div className="flow-step" key={x}><span>{String(i+1).padStart(2,"0")}</span><b>{x}</b>{i<flow.length-1&&<ArrowRight size={14}/>}</div>)}</div></div></section>
 
