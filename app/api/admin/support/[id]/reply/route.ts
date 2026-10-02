@@ -2,6 +2,7 @@ import {NextResponse} from "next/server";
 import {db} from "@/lib/db";
 import {currentUser} from "@/lib/auth";
 import {sendEmail} from "@/lib/email";
+import {sendPushToUser} from "@/lib/push";
 
 const esc=(v:string)=>v.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]||c));
 
@@ -12,10 +13,11 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
  const body=await request.json();
  const message=String(body.message||"").trim().slice(0,3000);
  if(message.length<2)return NextResponse.json({error:"Escribí una respuesta."},{status:400});
- const thread=await db.supportThread.findUnique({where:{id},select:{id:true,email:true,name:true,user:{select:{email:true,name:true}}}});
+ const thread=await db.supportThread.findUnique({where:{id},select:{id:true,email:true,name:true,userId:true,organizationId:true,user:{select:{email:true,name:true}}}});
  if(!thread)return NextResponse.json({error:"No encontrado"},{status:404});
  const m=await db.supportMessage.create({data:{threadId:id,sender:"ADMIN",senderUserId:user.id,body:message}});
  await db.supportThread.update({where:{id},data:{lastMessageAt:m.createdAt,status:"WAITING_USER"}});
+ if(thread.userId&&thread.organizationId){await db.notification.create({data:{organizationId:thread.organizationId,userId:thread.userId,type:"SYSTEM",title:"Soporte respondió",body:message.slice(0,240),href:"/dashboard"}}).catch(()=>undefined);await sendPushToUser(thread.userId,{title:"Soporte Constancia respondió",body:message.slice(0,140),href:"/dashboard",tag:"support-reply-"+id}).catch(()=>undefined)}
  const to=thread.user?.email||thread.email;
  if(to){
   const hello=esc(thread.user?.name||thread.name||"");
