@@ -1,5 +1,5 @@
 "use client";
-import {useState} from "react";
+import {useEffect,useState} from "react";
 import {useRouter} from "next/navigation";
 import {CheckCircle2,MessageCircle,Send} from "lucide-react";
 type Thread={id:string;name:string|null;email:string|null;subject:string|null;status:string;lastMessageAt:string;organization:{name:string}|null;messages:{id:string;sender:string;body:string;createdAt:string}[]};
