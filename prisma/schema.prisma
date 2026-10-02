@@ -104,6 +104,15 @@ enum LegalRequestStatus {
   RESOLVED
   REJECTED
 }
+enum SupportThreadStatus {
+  OPEN
+  WAITING_USER
+  CLOSED
+}
+enum SupportSender {
+  USER
+  ADMIN
+}
 
 model User {
   id                   String         @id @default(cuid())
@@ -125,6 +134,8 @@ model User {
   createdWorkOrders    WorkOrder[] @relation("WorkOrderCreator")
   assignedWorkOrders   WorkOrder[] @relation("WorkOrderAssignee")
   notifications        Notification[]
+  supportThreads       SupportThread[]
+  supportMessages      SupportMessage[]
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
   @@index([activeOrganizationId])
@@ -181,6 +192,7 @@ model Organization {
   quotes                  Quote[]
   maintenanceContracts    MaintenanceContract[]
   notifications           Notification[]
+  supportThreads          SupportThread[]
 }
 
 model Membership {
@@ -541,4 +553,37 @@ model RateLimitEvent {
   createdAt DateTime @default(now())
 
   @@index([key, createdAt])
+}
+
+
+model SupportThread {
+  id             String              @id @default(cuid())
+  organizationId String?
+  organization   Organization?       @relation(fields:[organizationId],references:[id],onDelete:SetNull)
+  userId         String?
+  user           User?               @relation(fields:[userId],references:[id],onDelete:SetNull)
+  name           String?
+  email          String?
+  subject        String?
+  status         SupportThreadStatus @default(OPEN)
+  lastMessageAt  DateTime            @default(now())
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  messages       SupportMessage[]
+  @@index([organizationId,lastMessageAt])
+  @@index([userId,lastMessageAt])
+  @@index([status,lastMessageAt])
+}
+
+model SupportMessage {
+  id          String        @id @default(cuid())
+  threadId    String
+  thread      SupportThread @relation(fields:[threadId],references:[id],onDelete:Cascade)
+  sender      SupportSender
+  senderUserId String?
+  senderUser  User?         @relation(fields:[senderUserId],references:[id],onDelete:SetNull)
+  body        String        @db.Text
+  readAt      DateTime?
+  createdAt   DateTime      @default(now())
+  @@index([threadId,createdAt])
 }
