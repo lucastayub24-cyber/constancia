@@ -8,6 +8,7 @@ import {GlobalSearch} from "@/components/GlobalSearch";
 import {NotificationsBadge} from "@/components/NotificationsBadge";
 import {QuickActionMenu} from "@/components/QuickActionMenu";
 import {DashboardCoach} from "@/components/DashboardCoach";
+import {AdminSupportBadge} from "@/components/AdminSupportBadge";
 import {clearOfflineAppData} from "@/lib/offlineQueue";
 import {BarChart3,CalendarDays,ChevronDown,CircleDollarSign,ClipboardList,CreditCard,FileCheck2,FileText,Grid2X2,HelpCircle,Home,Landmark,LogOut,PackageSearch,PanelsTopLeft,Plus,Repeat2,Settings,ShieldCheck,UserPlus,Users} from "lucide-react";
 
@@ -45,13 +46,13 @@ export function DashboardShell({children,isAdmin,currentOrganizationId,organizat
    <nav className="sidenav sidenav-v3">{main.map(([href,label,Icon])=><Link key={href} href={href} className={active(href)?"active":""}><Icon size={17}/><span>{label}</span></Link>)}</nav>
    <details className="side-group" open={tools.some(([href])=>active(href))}><summary><span>Más herramientas</span><ChevronDown size={14}/></summary><nav>{tools.map(([href,label,Icon])=><Link key={href} href={href} className={active(href)?"active":""}><Icon size={15}/><span>{label}</span></Link>)}</nav></details>
    <details className="side-group" open={account.some(([href])=>active(href))}><summary><span>Cuenta y ayuda</span><ChevronDown size={14}/></summary><nav>{account.map(([href,label,Icon])=><Link key={href} href={href} className={active(href)?"active":""}><Icon size={15}/><span>{label}</span></Link>)}</nav></details>
-   <div className="side-bottom"><InstallAppButton/>{isAdmin&&<Link href="/admin" className={active("/admin")?"active":""}><ShieldCheck size={15}/>Administración</Link>}<button onClick={logout}><LogOut size={15}/>Salir</button></div>
+   <div className="side-bottom"><InstallAppButton/>{isAdmin&&<Link href="/admin/soporte"><HelpCircle size={15}/>Soporte</Link>}{isAdmin&&<Link href="/admin" className={active("/admin")?"active":""}><ShieldCheck size={15}/>Administración</Link>}<button onClick={logout}><LogOut size={15}/>Salir</button></div>
   </aside>
 
   <div className="mobile-dash-head"><Brand/><div className="mobile-head-actions"><OrgSwitcher currentId={currentOrganizationId} organizations={organizations}/><button className="mobile-logout" type="button" onClick={logout} aria-label="Cerrar sesión" title="Cerrar sesión"><LogOut size={17}/><span>Salir</span></button></div></div>
 
   <div className="dashworkspace">
-   <div className="dash-topbar dash-topbar-v3"><div className="topbar-search"><GlobalSearch/></div><div className="topbar-actions"><QuickActionMenu/><NotificationsBadge/></div></div>
+   <div className="dash-topbar dash-topbar-v3"><div className="topbar-search"><GlobalSearch/></div><div className="topbar-actions"><QuickActionMenu/>{isAdmin&&<AdminSupportBadge/>}<NotificationsBadge/></div></div>
    <div className="dash-coach-wrap"><DashboardCoach/></div>
    <main className="dashmain dashmain-v3">{children}</main>
   </div>
