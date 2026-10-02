@@ -1,0 +1,8 @@
+import Link from "next/link";import {ArrowRight,Headphones,MousePointerClick,Sparkles,Waypoints} from "lucide-react";
+const points=[
+ {I:MousePointerClick,t:"Una acción por pantalla",d:"Primero ves lo que necesitás hacer. Los campos y herramientas avanzadas aparecen solo cuando los pedís."},
+ {I:Waypoints,t:"Te dice qué sigue",d:"El Inicio marca el próximo paso y cada flujo usa palabras comunes, no lenguaje de software."},
+ {I:Sparkles,t:"Empezás con lo mínimo",d:"Cliente: nombre. Trabajo: cliente + tarea. Lo demás es opcional y se puede completar después."},
+ {I:Headphones,t:"Soporte siempre a mano",d:"Desde el panel podés preguntar sin salir del sistema. Si no hay respuesta inmediata, el mensaje queda guardado."},
+];
+export function SimpleByDesign(){return <section className="section simple-by-design"><div className="container"><div className="section-intro"><div><div className="eyebrow">CONSTANCIA 3.0 · MÁS SIMPLE</div><h2>Si sabés qué trabajo hiciste, sabés usar Constancia.</h2></div><p>No necesitás aprender un sistema. Elegís qué querés hacer y la pantalla te lleva paso a paso.</p></div><div className="simple-promise-grid">{points.map(({I,t,d})=><article key={t}><span><I size={19}/></span><h3>{t}</h3><p>{d}</p></article>)}</div><div className="simple-support-cta"><div><Headphones size={21}/><div><b>¿Te trabaste antes de empezar?</b><span>Escribinos con tus palabras. No necesitás saber el nombre técnico de lo que buscás.</span></div></div><Link className="btn btn-light" href="/soporte">Hablar con soporte <ArrowRight size={13}/></Link></div></div></section>}
