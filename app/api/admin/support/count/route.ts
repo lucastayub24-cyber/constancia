@@ -1,0 +1,2 @@
+import {NextResponse} from "next/server";import {currentUser} from "@/lib/auth";import {db} from "@/lib/db";
+export async function GET(){const user=await currentUser();if(!user||user.role!=="ADMIN")return NextResponse.json({count:0},{status:401});const count=await db.supportThread.count({where:{status:"OPEN"}});return NextResponse.json({count})}
