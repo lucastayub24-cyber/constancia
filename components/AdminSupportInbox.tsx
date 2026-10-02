@@ -5,6 +5,7 @@ import {CheckCircle2,MessageCircle,Send} from "lucide-react";
 type Thread={id:string;name:string|null;email:string|null;subject:string|null;status:string;lastMessageAt:string;organization:{name:string}|null;messages:{id:string;sender:string;body:string;createdAt:string}[]};
 export function AdminSupportInbox({threads}:{threads:Thread[]}){
  const r=useRouter();const[open,setOpen]=useState<string|null>(threads[0]?.id||null);const[busy,setBusy]=useState<string|null>(null);
+ useEffect(()=>{const id=setInterval(()=>r.refresh(),7000);return()=>clearInterval(id)},[r]);
  async function reply(id:string,e:React.FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);const message=String(f.get("message")||"").trim();if(!message)return;setBusy(id);const x=await fetch("/api/admin/support/"+id+"/reply",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message})});setBusy(null);if(x.ok){(e.currentTarget as HTMLFormElement).reset();r.refresh()}}
  async function close(id:string){setBusy(id);await fetch("/api/admin/support/"+id+"/close",{method:"POST"});setBusy(null);r.refresh()}
  return <section className="panel admin-support"><div className="panel-title-row"><div><h2>Soporte</h2><span className="muted">Consultas del panel y de la web</span></div><span className="pill">{threads.filter(t=>t.status!=="CLOSED").length} abiertas</span></div>
