@@ -48,7 +48,7 @@ export function DashboardShell({children,isAdmin,currentOrganizationId,organizat
    <div className="side-bottom"><InstallAppButton/>{isAdmin&&<Link href="/admin" className={active("/admin")?"active":""}><ShieldCheck size={15}/>Administración</Link>}<button onClick={logout}><LogOut size={15}/>Salir</button></div>
   </aside>
 
-  <div className="mobile-dash-head"><Brand/><OrgSwitcher currentId={currentOrganizationId} organizations={organizations}/></div>
+  <div className="mobile-dash-head"><Brand/><div className="mobile-head-actions"><OrgSwitcher currentId={currentOrganizationId} organizations={organizations}/><button className="mobile-logout" type="button" onClick={logout} aria-label="Cerrar sesión" title="Cerrar sesión"><LogOut size={17}/><span>Salir</span></button></div></div>
 
   <div className="dashworkspace">
    <div className="dash-topbar dash-topbar-v3"><div className="topbar-search"><GlobalSearch/></div><div className="topbar-actions"><QuickActionMenu/><NotificationsBadge/></div></div>
