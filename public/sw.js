@@ -1,4 +1,4 @@
-const VERSION="v3";
+const VERSION="v4";
 const STATIC_CACHE="constancia-static-"+VERSION;
 const PRIVATE_CACHE="constancia-private-"+VERSION;
 const DB_NAME="constancia-offline";
@@ -114,4 +114,30 @@ self.addEventListener("fetch",event=>{
       }
     })());
   }
+});
+
+
+self.addEventListener("push",event=>{
+  let data={title:"Constancia",body:"Tenés una novedad.",href:"/dashboard/notificaciones",tag:"constancia"};
+  try{if(event.data)data={...data,...event.data.json()}}catch{}
+  event.waitUntil(self.registration.showNotification(data.title,{
+    body:data.body,
+    icon:"/brand/constancia-app-icon.svg",
+    badge:"/brand/constancia-icon.svg",
+    tag:data.tag||"constancia",
+    data:{href:data.href||"/dashboard/notificaciones"},
+    renotify:true
+  }));
+});
+
+self.addEventListener("notificationclick",event=>{
+  event.notification.close();
+  const href=event.notification.data?.href||"/dashboard/notificaciones";
+  event.waitUntil((async()=>{
+    const windows=await self.clients.matchAll({type:"window",includeUncontrolled:true});
+    for(const client of windows){
+      if("focus" in client){await client.focus();if("navigate" in client)await client.navigate(href);return}
+    }
+    if(self.clients.openWindow)await self.clients.openWindow(href);
+  })());
 });
