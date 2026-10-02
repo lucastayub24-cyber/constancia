@@ -36,7 +36,7 @@ export function DashboardShell({children,isAdmin,currentOrganizationId,organizat
   ["/dashboard/configuracion","Configuración",Settings],
   ["/dashboard/guia","Cómo se usa",HelpCircle],
  ] as const;
- const active=(href:string)=>p===href||p.startsWith(href+"/");
+ const active=(href:string)=>href==="/dashboard"?p===href:p===href||p.startsWith(href+"/");
  async function logout(){await clearOfflineAppData().catch(()=>undefined);await fetch("/api/auth/logout",{method:"POST"});r.push("/");r.refresh()}
  return <div className="dash dash-v3"><aside className="side side-v3">
    <div className="side-brand"><Brand inverted/></div>
@@ -57,7 +57,7 @@ export function DashboardShell({children,isAdmin,currentOrganizationId,organizat
   </div>
 
   <nav className="mobile-dash-nav" aria-label="Navegación del panel">
-   <Link href="/dashboard" className={active("/dashboard")&&!p.startsWith("/dashboard/")?"active":""}><Home size={18}/><span>Inicio</span></Link>
+   <Link href="/dashboard" className={active("/dashboard")?"active":""}><Home size={18}/><span>Inicio</span></Link>
    <Link href="/dashboard/ordenes" className={active("/dashboard/ordenes")?"active":""}><ClipboardList size={18}/><span>Trabajos</span></Link>
    <Link href="/dashboard/ordenes#nuevo" className="mobile-create"><Plus size={20}/><span>Nuevo</span></Link>
    <Link href="/dashboard/clientes" className={active("/dashboard/clientes")?"active":""}><Users size={18}/><span>Clientes</span></Link>
