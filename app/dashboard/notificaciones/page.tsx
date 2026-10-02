@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {AlertTriangle,Bell,CalendarClock,CircleDollarSign,Wrench} from "lucide-react";
+import {DeviceNotificationSettings} from "@/components/DeviceNotifications";
 import {activeOrganization} from "@/lib/org";import {db} from "@/lib/db";import {moneyCents} from "@/lib/utils";
 export default async function NotificationsPage(){
  const{organization}=await activeOrganization();const now=new Date();const soon14=new Date(Date.now()+14*86400000);const soon3=new Date(Date.now()+3*86400000);
@@ -10,7 +11,7 @@ export default async function NotificationsPage(){
   db.workOrder.findMany({where:{organizationId:organization.id,status:{notIn:["COMPLETED","CANCELED"]},scheduledStart:{gte:now,lte:soon3}},include:{client:true,asset:true,assignedUser:true},orderBy:{scheduledStart:"asc"},take:30})
  ]);
  return <><header className="page-head"><div><div className="eyebrow">CENTRO DE NOTIFICACIONES</div><h1>Lo que necesita atención.</h1><p>Trabajos próximos, mantenimientos, deuda y actividad del sistema.</p></div></header>
- <section className="stats"><div className="stat"><span>Órdenes próximas</span><strong>{orders.length}</strong></div><div className="stat"><span>Services próximos</span><strong>{due.length}</strong></div><div className="stat"><span>Saldos vencidos</span><strong>{overdue.length}</strong></div><div className="stat"><span>Notificaciones</span><strong>{stored.length}</strong></div></section>
+ <DeviceNotificationSettings/><section className="stats"><div className="stat"><span>Órdenes próximas</span><strong>{orders.length}</strong></div><div className="stat"><span>Services próximos</span><strong>{due.length}</strong></div><div className="stat"><span>Saldos vencidos</span><strong>{overdue.length}</strong></div><div className="stat"><span>Notificaciones</span><strong>{stored.length}</strong></div></section>
  <div className="notification-grid">
   <section className="panel"><div className="panel-title-row"><h2><Wrench size={18}/> Próximas órdenes</h2><Link href="/dashboard/agenda">Ver agenda</Link></div>{orders.length===0?<p className="muted">No hay órdenes en los próximos 3 días.</p>:orders.map(x=><Link className="notify-row" href={"/dashboard/orden/"+x.id} key={x.id}><span className="notify-icon"><CalendarClock size={16}/></span><div><b>OT-{String(x.sequentialNumber).padStart(5,"0")} · {x.title}</b><small>{x.client.name}{x.asset?" · "+x.asset.name:""}{x.assignedUser?" · "+x.assignedUser.name:""}</small></div><time>{x.scheduledStart?.toLocaleString("es-AR",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})}</time></Link>)}</section>
   <section className="panel"><div className="panel-title-row"><h2><CalendarClock size={18}/> Próximos services</h2></div>{due.length===0?<p className="muted">No hay services próximos en 14 días.</p>:due.map(x=><Link className="notify-row" href={"/dashboard/constancia/"+x.id} key={x.id}><span className="notify-icon"><Wrench size={16}/></span><div><b>{x.serviceTitle}</b><small>{x.client?.name||"Sin cliente"}{x.asset?" · "+x.asset.name:""}</small></div><time>{x.nextServiceAt?.toLocaleDateString("es-AR")}</time></Link>)}</section>
