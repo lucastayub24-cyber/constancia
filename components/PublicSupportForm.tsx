@@ -1,0 +1,9 @@
+"use client";
+import {useState} from "react";
+import {CheckCircle2,Send} from "lucide-react";
+export function PublicSupportForm(){
+ const[done,setDone]=useState(false);const[busy,setBusy]=useState(false);const[error,setError]=useState("");
+ async function submit(e:React.FormEvent<HTMLFormElement>){e.preventDefault();setBusy(true);setError("");const f=new FormData(e.currentTarget);try{const r=await fetch("/api/support",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.fromEntries(f))});const j=await r.json();if(!r.ok)throw new Error(j.error||"No se pudo enviar");setDone(true)}catch(e){setError(e instanceof Error?e.message:"No se pudo enviar")}finally{setBusy(false)}}
+ if(done)return <div className="support-sent"><CheckCircle2 size={28}/><h2>Mensaje recibido.</h2><p>Guardamos tu consulta y vamos a responderte al email que dejaste.</p><a className="btn btn-brand" href="/">Volver al inicio</a></div>;
+ return <form className="panel form support-public-form" onSubmit={submit}><div className="form-grid"><label className="field">Tu nombre<input className="input" name="name" required/></label><label className="field">Email<input className="input" name="email" type="email" required/></label><label className="field full">Tema<input className="input" name="subject" placeholder="Ej. No encuentro cómo cobrar una constancia"/></label><label className="field full">¿Qué necesitás?<textarea className="textarea" name="message" rows={6} placeholder="Contanos qué querés hacer o en qué parte te trabaste." required/></label></div>{error&&<div className="error">{error}</div>}<button className="btn btn-brand" disabled={busy}>{busy?"Enviando...":<><Send size={14}/>Enviar consulta</>}</button></form>
+}
