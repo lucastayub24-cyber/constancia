@@ -1,4 +1,4 @@
-import {NextResponse} from "next/server";import {db} from "@/lib/db";import {sendEmail} from "@/lib/email";import {appUrl} from "@/lib/utils";
+import {NextResponse} from "next/server";import {db} from "@/lib/db";import {sendEmail} from "@/lib/email";import {appUrl} from "@/lib/utils";import {sendPushToOrganization,sendPushToUser} from "@/lib/push";
 
 function authorized(request:Request){const secret=process.env.CRON_SECRET;if(!secret)return false;return request.headers.get("authorization")==="Bearer "+secret}
 
@@ -25,8 +25,10 @@ export async function GET(request:Request){
    await tx.maintenanceContract.update({where:{id:c.id},data:{nextVisitAt:next}});
   });
  }
+ const upcomingOrders=await db.workOrder.findMany({where:{status:{notIn:["COMPLETED","CANCELED"]},scheduledStart:{gte:now,lte:orderHorizon}},include:{client:true},take:250});
+ for(const o of upcomingOrders){const due=o.scheduledStart!.toLocaleString("es-AR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit",timeZone:"America/Argentina/Buenos_Aires"});const payload={title:"Trabajo próximo",body:o.client.name+" · "+o.title+" · "+due,href:"/dashboard/orden/"+o.id,tag:"reminder-order-"+o.id};if(o.assignedUserId)await sendPushToUser(o.assignedUserId,payload).catch(()=>undefined);else await sendPushToOrganization(o.organizationId,payload).catch(()=>undefined)}
  const certificates=await db.certificate.findMany({where:{status:"ISSUED",nextServiceAt:{gte:now,lte:until},reminderSentAt:null,organization:{plan:{in:["PRO","BUSINESS"]}}},include:{organization:true,client:true},take:250});
  let sent=0,skipped=0;
- for(const c of certificates){const target=c.organization.email;if(!target){skipped++;continue}const clientName=c.client?.name||"tu cliente";const due=c.nextServiceAt!.toLocaleDateString("es-AR");await sendEmail(target,"Próximo service: "+clientName+" · "+due,"<p>Tenés un próximo service programado.</p><p><b>Cliente:</b> "+clientName+"<br/><b>Trabajo anterior:</b> "+c.serviceTitle+"<br/><b>Fecha sugerida:</b> "+due+"</p><p><a href=\""+appUrl("/dashboard/constancia/"+c.id)+"\">Abrir constancia</a></p>");await db.certificate.update({where:{id:c.id},data:{reminderSentAt:new Date()}});sent++}
- return NextResponse.json({ok:true,generatedOrders,serviceReminders:{found:certificates.length,sent,skipped}});
+ for(const c of certificates){const target=c.organization.email;const clientName=c.client?.name||"tu cliente";const due=c.nextServiceAt!.toLocaleDateString("es-AR");if(target){await sendEmail(target,"Próximo service: "+clientName+" · "+due,"<p>Tenés un próximo service programado.</p><p><b>Cliente:</b> "+clientName+"<br/><b>Trabajo anterior:</b> "+c.serviceTitle+"<br/><b>Fecha sugerida:</b> "+due+"</p><p><a href=\""+appUrl("/dashboard/constancia/"+c.id)+"\">Abrir constancia</a></p>").catch(()=>undefined)}else skipped++;await sendPushToOrganization(c.organizationId,{title:"Próximo service",body:clientName+" · "+c.serviceTitle+" · "+due,href:"/dashboard/constancia/"+c.id,tag:"service-"+c.id}).catch(()=>undefined);await db.certificate.update({where:{id:c.id},data:{reminderSentAt:new Date()}});sent++}
+ return NextResponse.json({ok:true,generatedOrders,upcomingOrderPushes:upcomingOrders.length,serviceReminders:{found:certificates.length,sent,skipped}});
 }
