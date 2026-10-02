@@ -187,3 +187,7 @@
  .quote-item-v3{grid-template-columns:1fr 80px}.quote-item-v3 label:first-child{grid-column:1/-1}.quote-item-v3 .remove-item{grid-column:2}
  .support-fab span{display:none}.support-fab{width:46px;padding:0;justify-content:center}.support-popover{bottom:132px}
 }
+
+.public-support-fab{position:fixed;right:18px;bottom:18px;z-index:320;height:43px;padding:0 14px;border-radius:999px;background:#172a20;color:#fff;display:flex;align-items:center;gap:7px;font-size:9px;font-weight:850;box-shadow:0 12px 34px rgba(16,35,24,.2)}
+.public-support-fab:hover{background:#21432f}
+@media(max-width:700px){.public-support-fab{right:12px;bottom:12px}.public-support-fab span{display:none}.public-support-fab{width:43px;padding:0;justify-content:center}}
