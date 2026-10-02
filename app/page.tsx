@@ -6,6 +6,7 @@ import {PublicProcessShowcase} from "@/components/PublicProcessShowcase";
 import {BeforeAfter} from "@/components/BeforeAfter";
 import {VisualFaq} from "@/components/VisualFaq";
 import {SimpleByDesign} from "@/components/SimpleByDesign";
+import {SuccessStories} from "@/components/SuccessStories";
 import {money} from "@/lib/utils";
 import {PLAN_INFO} from "@/lib/plans";
 
@@ -84,6 +85,8 @@ export default function Home(){return <><a className="skip-link" href="#contenid
 <PublicProcessShowcase/>
 
 <BeforeAfter/>
+
+<SuccessStories/>
 
 <SimpleByDesign/>
 
