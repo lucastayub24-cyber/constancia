@@ -8,7 +8,7 @@ import {GlobalSearch} from "@/components/GlobalSearch";
 import {NotificationsBadge} from "@/components/NotificationsBadge";
 import {SupportWidget} from "@/components/SupportWidget";
 import {clearOfflineAppData} from "@/lib/offlineQueue";
-import {BarChart3,CalendarDays,ChevronDown,CircleDollarSign,ClipboardList,CreditCard,FileCheck2,FileText,HelpCircle,Home,Landmark,LogOut,PackageSearch,PanelsTopLeft,Plus,Repeat2,Settings,ShieldCheck,UserPlus,Users} from "lucide-react";
+import {BarChart3,CalendarDays,ChevronDown,CircleDollarSign,ClipboardList,CreditCard,FileCheck2,FileText,Grid2X2,HelpCircle,Home,Landmark,LogOut,PackageSearch,PanelsTopLeft,Plus,Repeat2,Settings,ShieldCheck,UserPlus,Users} from "lucide-react";
 
 export function DashboardShell({children,isAdmin,currentOrganizationId,organizations}:{children:React.ReactNode;isAdmin:boolean;currentOrganizationId:string;organizations:{id:string;name:string}[]}){
  const p=usePathname();const r=useRouter();
@@ -17,9 +17,10 @@ export function DashboardShell({children,isAdmin,currentOrganizationId,organizat
   ["/dashboard/ordenes","Trabajos",ClipboardList],
   ["/dashboard/clientes","Clientes",Users],
   ["/dashboard/caja","Cobros",CircleDollarSign],
-  ["/dashboard/constancias","Constancias",FileCheck2],
+  ["/dashboard/mas","Más",Grid2X2],
  ] as const;
  const tools=[
+  ["/dashboard/constancias","Constancias",FileCheck2],
   ["/dashboard/activos","Equipos",PackageSearch],
   ["/dashboard/agenda","Agenda",CalendarDays],
   ["/dashboard/presupuestos","Presupuestos",FileText],
