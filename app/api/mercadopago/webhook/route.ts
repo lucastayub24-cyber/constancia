@@ -2,6 +2,7 @@ import {db} from "@/lib/db";
 import {getAuthorizedPayment,getPayment,getSubscription,validMpSignature} from "@/lib/mercadopago";
 import {PLAN_INFO} from "@/lib/plans";
 import {getSellerPayment} from "@/lib/mp-seller";
+import {sendPushToOrganization} from "@/lib/push";
 import type {Plan} from "@prisma/client";
 
 const paidAt=(value?:string|null)=>value?new Date(value):new Date();
@@ -36,7 +37,9 @@ export async function POST(request:Request){
      if(!exists)await db.certificatePayment.create({data:{certificateId:cert.id,amountCents:BigInt(Math.round(Number(x.transaction_amount||0)*100)),method:"MERCADO_PAGO",paidAt:paidAt(x.date_approved),reference,notes:"Pago acreditado automáticamente por Mercado Pago."}});
      const agg=await db.certificatePayment.aggregate({where:{certificateId:cert.id},_sum:{amountCents:true}});const totalPaid=agg._sum.amountCents||0n;const paymentStatus=cert.totalAmountCents===null?"NO_AMOUNT":totalPaid>=cert.totalAmountCents?"PAID":totalPaid>0n?"PARTIAL":"PENDING";
      await db.certificate.update({where:{id:cert.id},data:{paymentStatus}});
-     await db.notification.create({data:{organizationId:orgId,type:"PAYMENT",title:"Pago acreditado",body:"Mercado Pago acreditó un pago de $"+Number(x.transaction_amount||0).toLocaleString("es-AR")+" en la constancia #"+String(cert.sequentialNumber).padStart(6,"0")+".",href:"/dashboard/constancia/"+cert.id}});
+     const pushBody="Mercado Pago acreditó $"+Number(x.transaction_amount||0).toLocaleString("es-AR")+" · Constancia #"+String(cert.sequentialNumber).padStart(6,"0");
+     await db.notification.create({data:{organizationId:orgId,type:"PAYMENT",title:"Pago acreditado",body:pushBody+".",href:"/dashboard/constancia/"+cert.id}});
+     await sendPushToOrganization(orgId,{title:"Pago acreditado",body:pushBody,href:"/dashboard/constancia/"+cert.id,tag:"payment-"+cert.id}).catch(()=>undefined);
     }
    }else{
     const orgId=parts?.[1];const planRaw=parts?.[2];const org=orgId?await db.organization.findUnique({where:{id:orgId}}):null;
