@@ -1,6 +1,7 @@
 import {redirect} from "next/navigation";
 import {DashboardShell} from "@/components/DashboardShell";
 import {PwaManager} from "@/components/PwaManager";
+import {DeviceNotifications} from "@/components/DeviceNotifications";
 import {currentUser} from "@/lib/auth";
 import {db} from "@/lib/db";
 
@@ -21,6 +22,7 @@ export default async function DashboardLayout({children}:{children:React.ReactNo
   }
   return <>
     <PwaManager/>
+    <DeviceNotifications/>
     <DashboardShell
       isAdmin={user.role==="ADMIN"}
       currentOrganizationId={currentId}
