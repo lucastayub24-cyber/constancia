@@ -6,12 +6,46 @@ import {OrgSwitcher} from "@/components/OrgSwitcher";
 import {InstallAppButton} from "@/components/InstallAppButton";
 import {GlobalSearch} from "@/components/GlobalSearch";
 import {NotificationsBadge} from "@/components/NotificationsBadge";
+import {SupportWidget} from "@/components/SupportWidget";
 import {clearOfflineAppData} from "@/lib/offlineQueue";
-import {CreditCard,FilePlus2,Files,LayoutDashboard,LogOut,Settings,ShieldCheck,Users,UserPlus,HelpCircle,PackageSearch,ClipboardList,CalendarDays,PanelsTopLeft,FileText,Repeat2,WalletCards,BarChart3,Landmark} from "lucide-react";
+import {BarChart3,CalendarDays,ChevronDown,CircleDollarSign,ClipboardList,CreditCard,FileCheck2,FileText,HelpCircle,Home,Landmark,LogOut,PackageSearch,PanelsTopLeft,Plus,Repeat2,Settings,ShieldCheck,UserPlus,Users} from "lucide-react";
 
 export function DashboardShell({children,isAdmin,currentOrganizationId,organizations}:{children:React.ReactNode;isAdmin:boolean;currentOrganizationId:string;organizations:{id:string;name:string}[]}){
  const p=usePathname();const r=useRouter();
- const items=[["/dashboard","Resumen",LayoutDashboard],["/dashboard/nueva","Nueva constancia",FilePlus2],["/dashboard/constancias","Constancias",Files],["/dashboard/clientes","Clientes",Users],["/dashboard/activos","Activos",PackageSearch],["/dashboard/ordenes","Órdenes",ClipboardList],["/dashboard/agenda","Agenda",CalendarDays],["/dashboard/presupuestos","Presupuestos",FileText],["/dashboard/contratos","Contratos",Repeat2],["/dashboard/caja","Caja",WalletCards],["/dashboard/cuentas","Cuentas corrientes",Landmark],["/dashboard/reportes","Reportes",BarChart3],["/dashboard/plantillas","Plantillas",PanelsTopLeft],["/dashboard/equipo","Equipo",UserPlus],["/dashboard/facturacion","Facturación",CreditCard],["/dashboard/configuracion","Configuración",Settings],["/dashboard/guia","Guía",HelpCircle]] as const;
+ const main=[
+  ["/dashboard","Inicio",Home],
+  ["/dashboard/ordenes","Trabajos",ClipboardList],
+  ["/dashboard/clientes","Clientes",Users],
+  ["/dashboard/caja","Cobros",CircleDollarSign],
+  ["/dashboard/constancias","Constancias",FileCheck2],
+ ] as const;
+ const tools=[
+  ["/dashboard/activos","Equipos",PackageSearch],
+  ["/dashboard/agenda","Agenda",CalendarDays],
+  ["/dashboard/presupuestos","Presupuestos",FileText],
+  ["/dashboard/contratos","Abonos y recurrencia",Repeat2],
+  ["/dashboard/cuentas","Cuentas corrientes",Landmark],
+  ["/dashboard/reportes","Reportes",BarChart3],
+  ["/dashboard/plantillas","Plantillas",PanelsTopLeft],
+  ["/dashboard/equipo","Mi equipo",UserPlus],
+ ] as const;
+ const account=[
+  ["/dashboard/facturacion","Plan y facturación",CreditCard],
+  ["/dashboard/configuracion","Configuración",Settings],
+  ["/dashboard/guia","Cómo se usa",HelpCircle],
+ ] as const;
+ const active=(href:string)=>p===href||p.startsWith(href+"/");
  async function logout(){await clearOfflineAppData().catch(()=>undefined);await fetch("/api/auth/logout",{method:"POST"});r.push("/");r.refresh()}
- return <div className="dash"><aside className="side"><Brand inverted/><OrgSwitcher currentId={currentOrganizationId} organizations={organizations}/><InstallAppButton/><nav className="sidenav">{items.map(([href,label,Icon])=><Link key={href} href={href} style={p===href||p.startsWith(href+"/")?{background:"#26342b",color:"#fff"}:undefined}><Icon size={16}/>{label}</Link>)}{isAdmin&&<Link href="/admin"><ShieldCheck size={16}/>Administración</Link>}<button onClick={logout} className="btn" style={{background:"transparent",justifyContent:"flex-start"}}><LogOut size={16}/>Salir</button></nav></aside><div className="dashworkspace"><div className="dash-topbar"><GlobalSearch/><NotificationsBadge/></div><main className="dashmain">{children}</main></div></div>
+ return <div className="dash dash-v3"><aside className="side side-v3">
+   <div className="side-brand"><Brand inverted/></div>
+   <OrgSwitcher currentId={currentOrganizationId} organizations={organizations}/>
+   <Link className="side-new-work" href="/dashboard/ordenes#nuevo"><Plus size={16}/>Nuevo trabajo</Link>
+   <nav className="sidenav sidenav-v3">{main.map(([href,label,Icon])=><Link key={href} href={href} className={active(href)?"active":""}><Icon size={17}/><span>{label}</span></Link>)}</nav>
+   <details className="side-group" open={tools.some(([href])=>active(href))}><summary><span>Más herramientas</span><ChevronDown size={14}/></summary><nav>{tools.map(([href,label,Icon])=><Link key={href} href={href} className={active(href)?"active":""}><Icon size={15}/><span>{label}</span></Link>)}</nav></details>
+   <details className="side-group" open={account.some(([href])=>active(href))}><summary><span>Cuenta y ayuda</span><ChevronDown size={14}/></summary><nav>{account.map(([href,label,Icon])=><Link key={href} href={href} className={active(href)?"active":""}><Icon size={15}/><span>{label}</span></Link>)}</nav></details>
+   <div className="side-bottom"><InstallAppButton/>{isAdmin&&<Link href="/admin" className={active("/admin")?"active":""}><ShieldCheck size={15}/>Administración</Link>}<button onClick={logout}><LogOut size={15}/>Salir</button></div>
+  </aside>
+  <div className="dashworkspace"><div className="dash-topbar dash-topbar-v3"><div className="topbar-search"><GlobalSearch/></div><div className="topbar-actions"><Link href="/dashboard/ordenes#nuevo" className="topbar-new"><Plus size={14}/>Nuevo trabajo</Link><NotificationsBadge/></div></div><main className="dashmain dashmain-v3">{children}</main></div>
+  <SupportWidget/>
+ </div>
 }
